@@ -53,13 +53,22 @@ def test_complete_issues_gate_tests_pass(github_complete_issues):
             continue
 
         for gate in gates:
+            cmd = gate["command"]
+            # Skip commands that would recursively invoke this test suite.
+            # Bare `atdd validate` runs all phases; `atdd validate coach`
+            # runs coach validators (including this file) → recursion.
+            if cmd.strip().startswith("atdd validate"):
+                tail = cmd.strip()[len("atdd validate"):].lstrip()
+                if not tail or tail.startswith("--") or tail.startswith("coach"):
+                    continue
+
             result = subprocess.run(
-                gate["command"],
+                cmd,
                 shell=True,
                 capture_output=True,
                 text=True,
                 cwd=str(REPO_ROOT),
-                timeout=300,
+                timeout=120,
             )
             if result.returncode != 0:
                 stderr_tail = result.stderr.strip().splitlines()[-3:] if result.stderr else []
