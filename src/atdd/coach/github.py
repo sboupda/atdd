@@ -100,9 +100,14 @@ class GitHubClient:
             )
         return result.stdout.strip()
 
-    def _graphql(self, query: str) -> Dict[str, Any]:
+    def _graphql(
+        self, query: str, headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
         """Execute a GraphQL query via `gh api graphql`."""
-        output = self._run_gh(["api", "graphql", "-f", f"query={query}"])
+        args = ["api", "graphql", "-f", f"query={query}"]
+        for key, value in (headers or {}).items():
+            args.extend(["-H", f"{key}: {value}"])
+        output = self._run_gh(args)
         data = json.loads(output)
         if "errors" in data:
             raise GitHubClientError(
@@ -182,6 +187,70 @@ class GitHubClient:
             f'}}) {{ issue {{ id }} subIssue {{ id }} }} }}'
         )
         logger.info("Linked #%d as sub-issue of #%d", child_number, parent_number)
+
+    def get_all_sub_issues(
+        self, label: str, state: str = "OPEN",
+    ) -> Dict[int, List[Dict[str, Any]]]:
+        """Batch-fetch sub-issues for all issues matching *label* and *state*.
+
+        Single paginated GraphQL query replaces N sequential REST calls to
+        ``get_sub_issues()``.  Requires the ``sub_issues`` GraphQL preview
+        header.
+
+        Args:
+            label: Filter parent issues by this label (e.g. ``"atdd-issue"``).
+            state: GitHub issue state filter — ``"OPEN"`` or ``"CLOSED"``.
+
+        Returns:
+            Dict mapping parent issue number to its list of sub-issue dicts.
+            Sub-issue dicts contain ``number``, ``title``, ``state``, and
+            ``labels`` (normalised to lowercase state values for REST parity).
+        """
+        owner, name = self.repo.split("/")
+        state_upper = state.upper()
+        result: Dict[int, List[Dict[str, Any]]] = {}
+        cursor = None
+        headers = {"GraphQL-Features": "sub_issues"}
+
+        while True:
+            after = f', after: "{cursor}"' if cursor else ""
+            data = self._graphql(
+                f'{{ repository(owner:"{owner}", name:"{name}") {{ '
+                f'issues(first: 50, labels: ["{label}"], states: [{state_upper}]{after}) {{ '
+                f'pageInfo {{ hasNextPage endCursor }} '
+                f'nodes {{ '
+                f'number '
+                f'subIssues(first: 50) {{ nodes {{ '
+                f'number title state '
+                f'labels(first: 10) {{ nodes {{ name }} }} '
+                f'}} }} '
+                f'}} }} }} }}',
+                headers=headers,
+            )
+
+            repo_data = data["data"]["repository"]
+            for node in repo_data["issues"]["nodes"]:
+                parent_num = node["number"]
+                subs = []
+                for sub in node["subIssues"]["nodes"]:
+                    subs.append({
+                        "number": sub["number"],
+                        "title": sub["title"],
+                        "state": sub["state"].lower(),
+                        "labels": [{"name": l["name"]} for l in sub["labels"]["nodes"]],
+                    })
+                result[parent_num] = subs
+
+            page_info = repo_data["issues"]["pageInfo"]
+            if page_info["hasNextPage"]:
+                cursor = page_info["endCursor"]
+            else:
+                break
+
+        logger.debug(
+            "Fetched sub-issues for %d %s issues in batch", len(result), state_upper,
+        )
+        return result
 
     # -------------------------------------------------------------------------
     # Labels

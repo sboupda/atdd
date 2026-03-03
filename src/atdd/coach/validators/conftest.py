@@ -104,19 +104,30 @@ def github_project_items(github_client):
 
 
 @pytest.fixture(scope="session")
-def github_sub_issues(github_client, github_issues):
+def github_sub_issues(github_client):
     """Sub-issues for all open parent issues (fetched once per session).
 
     Returns dict mapping issue_number -> list[dict] of sub-issues.
-    Replaces N+1 calls to get_sub_issues() in individual tests.
+    Single batch GraphQL query replaces N sequential REST calls.
     """
     from atdd.coach.github import GitHubClientError
 
-    result = {}
-    for issue in github_issues:
-        num = issue["number"]
-        try:
-            result[num] = github_client.get_sub_issues(num)
-        except GitHubClientError:
-            result[num] = []
-    return result
+    try:
+        return github_client.get_all_sub_issues("atdd-issue", "OPEN")
+    except GitHubClientError as e:
+        pytest.skip(f"Cannot batch-query sub-issues: {e}")
+
+
+@pytest.fixture(scope="session")
+def github_closed_sub_issues(github_client):
+    """Sub-issues for all closed parent issues (fetched once per session).
+
+    Returns dict mapping issue_number -> list[dict] of sub-issues.
+    Enables test_archived_issues to use cached data instead of N+1 calls.
+    """
+    from atdd.coach.github import GitHubClientError
+
+    try:
+        return github_client.get_all_sub_issues("atdd-issue", "CLOSED")
+    except GitHubClientError as e:
+        pytest.skip(f"Cannot batch-query closed sub-issues: {e}")

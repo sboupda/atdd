@@ -14,10 +14,7 @@ These tests run against the LIVE GitHub API and require:
 
 Run: atdd validate coach
 """
-import json
 import pytest
-
-from atdd.coach.github import GitHubClientError
 
 pytestmark = [pytest.mark.platform, pytest.mark.github_api]
 
@@ -61,6 +58,7 @@ def test_github_client_methods_exist():
 
     required_methods = [
         "create_issue", "close_issue", "add_sub_issue", "get_sub_issues",
+        "get_all_sub_issues",
         "list_issues_by_label", "get_project_fields", "add_issue_to_project",
         "set_project_field_text", "set_project_field_select",
         "set_project_field_number", "get_project_item_id",
@@ -121,7 +119,7 @@ def test_sub_issue_progress_is_trackable(github_sub_issues):
     pytest.skip("No issue with sub-issues found")
 
 
-def test_archived_issues_have_no_orphaned_sub_issues(github_client):
+def test_archived_issues_have_no_orphaned_sub_issues(github_closed_sub_issues):
     """
     SPEC-COACH-C001-0005: Archived (closed) issues have no open sub-issues
 
@@ -130,35 +128,17 @@ def test_archived_issues_have_no_orphaned_sub_issues(github_client):
     Then: All sub-issues of closed parent issues are also closed
           (no orphaned open sub-issues)
     """
-    try:
-        # Get closed issues (separate query, not cached — closed issues are rare)
-        output = github_client._run_gh([
-            "issue", "list",
-            "--repo", github_client.repo,
-            "--label", "atdd-issue",
-            "--state", "closed",
-            "--json", "number,title",
-            "--limit", "20",
-        ])
-        closed_issues = json.loads(output) if output else []
-    except GitHubClientError as e:
-        pytest.skip(f"Cannot query GitHub: {e}")
-
-    if not closed_issues:
+    if not github_closed_sub_issues:
         pytest.skip("No closed issues found")
 
     orphans = []
-    for issue in closed_issues:
-        try:
-            subs = github_client.get_sub_issues(issue["number"])
-            open_subs = [s for s in subs if s.get("state") == "open"]
-            if open_subs:
-                sub_nums = ", ".join(f"#{s['number']}" for s in open_subs)
-                orphans.append(
-                    f"#{issue['number']}: {len(open_subs)} open sub-issues ({sub_nums})"
-                )
-        except GitHubClientError:
-            continue
+    for num, subs in github_closed_sub_issues.items():
+        open_subs = [s for s in subs if s.get("state") == "open"]
+        if open_subs:
+            sub_nums = ", ".join(f"#{s['number']}" for s in open_subs)
+            orphans.append(
+                f"#{num}: {len(open_subs)} open sub-issues ({sub_nums})"
+            )
 
     assert not orphans, (
         f"\nClosed issues with orphaned open sub-issues:\n  "
