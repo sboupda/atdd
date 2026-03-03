@@ -89,8 +89,16 @@ jobs:
         run: |
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping"
+            echo "CREATED=false" >> "$GITHUB_ENV"
           else
             git tag "$TAG"
             git push origin "$TAG"
             echo "Created and pushed tag $TAG"
+            echo "CREATED=true" >> "$GITHUB_ENV"
           fi
+
+      - name: Trigger publish workflow
+        if: env.CREATED == 'true'
+        run: gh workflow run publish.yml --ref "$TAG"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
