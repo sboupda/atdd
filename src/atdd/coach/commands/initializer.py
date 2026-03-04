@@ -134,6 +134,14 @@ def write_workspace(target_dir: Path) -> None:
                 "statusBar.background": bg,
                 "statusBar.foreground": fg,
             },
+            # Minimal default layout: Explorer + Terminal only
+            "workbench.panel.defaultLocation": "bottom",
+            "panel.defaultVisibility": "hidden",
+            "workbench.sideBar.location": "left",
+            "workbench.activityBar.location": "top",
+            "editor.minimap.enabled": False,
+            "breadcrumbs.enabled": False,
+            "workbench.secondarySideBar.visible": False,
         },
     }
 
