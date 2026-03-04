@@ -135,7 +135,21 @@ After adding or removing worktrees, run `atdd sync` to refresh the workspace fil
 atdd sync   # Regenerates .code-workspace with current worktrees
 ```
 
-Open the `.code-workspace` file in VS Code ("Open Workspace from File") for multi-root, branch-aware editing — each folder shows its active branch in the status bar.
+#### Opening the Workspace
+
+After migrating to worktree layout, **always open the `.code-workspace` file** instead of individual folders:
+
+```bash
+code your-project.code-workspace   # or: File → Open Workspace from File…
+```
+
+This gives you:
+- **Branch-aware sidebar** — each worktree folder shows its active branch in the Explorer
+- **Git tracking per worktree** — Source Control panel tracks changes independently per branch
+- **Shared settings** — editor config, extensions, and tasks apply across all worktrees
+- **Auto-updated** — `atdd sync` regenerates the workspace file when worktrees are added or removed
+
+> **Do not open `main/` directly.** Without the workspace file, VS Code won't track sibling worktrees and you lose multi-branch visibility.
 
 ### Issue Management
 
