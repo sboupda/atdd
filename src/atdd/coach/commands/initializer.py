@@ -84,7 +84,7 @@ def write_workspace(target_dir: Path) -> None:
         folders.remove(main_entry)
         folders.insert(0, main_entry)
 
-    # Resolve background color: saved in config → default yellow
+    # Resolve background color: config → existing workspace → default yellow
     bg = "#FFC107"
     config_path = target_dir / ".atdd" / "config.yaml"
     if config_path.exists():
@@ -94,6 +94,30 @@ def write_workspace(target_dir: Path) -> None:
             saved = config.get("workspace", {}).get("color")
             if saved:
                 bg = saved
+        except Exception:
+            pass
+
+    # If still default, check existing workspace file for user-set color
+    if bg == "#FFC107" and workspace_path.exists():
+        try:
+            existing = json.loads(workspace_path.read_text())
+            existing_bg = (
+                existing.get("settings", {})
+                .get("workbench.colorCustomizations", {})
+                .get("titleBar.activeBackground")
+            )
+            if existing_bg and existing_bg != "#FFC107":
+                bg = existing_bg
+                # Persist discovered color to config for future runs
+                if config_path.exists():
+                    try:
+                        with open(config_path) as f:
+                            cfg = yaml.safe_load(f) or {}
+                        cfg.setdefault("workspace", {})["color"] = bg
+                        with open(config_path, "w") as f:
+                            yaml.dump(cfg, f, default_flow_style=False, sort_keys=False)
+                    except Exception:
+                        pass
         except Exception:
             pass
 
@@ -161,6 +185,27 @@ class ProjectInitializer:
                     worktrees.append(line[len("worktree "):])
                     break
         return worktrees
+
+    def _prompt_workspace_color(self) -> None:
+        """Prompt user to pick a workspace color if unset or default yellow."""
+        config_path = self.target_dir / ".atdd" / "config.yaml"
+        if not config_path.exists():
+            return
+
+        try:
+            with open(config_path) as f:
+                config = yaml.safe_load(f) or {}
+        except Exception:
+            return
+
+        saved = config.get("workspace", {}).get("color")
+        if saved and saved != "#FFC107":
+            return
+
+        print("\nWorkspace color customization:")
+        from atdd.coach.commands.color import ColorManager
+        manager = ColorManager(self.target_dir)
+        manager.color()
 
     def _write_workspace(self) -> None:
         """Write a VS Code .code-workspace file (delegates to module-level)."""
@@ -307,6 +352,9 @@ class ProjectInitializer:
 
             # Create config.yaml
             self._create_config(force)
+
+            # Prompt for workspace color if unset or default yellow
+            self._prompt_workspace_color()
 
             # Install git hooks (pre-commit worktree enforcement)
             self._install_hooks(force)
