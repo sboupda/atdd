@@ -473,6 +473,20 @@ Phase descriptions:
     close_wmbt_top_parser.add_argument("wmbt_id", type=str, help="WMBT ID (e.g., D001, E003)")
     close_wmbt_top_parser.add_argument("--force", "-f", action="store_true", help="Close even if ATDD cycle checkboxes are unchecked")
 
+    # ----- atdd color [value] -----
+    color_parser = subparsers.add_parser(
+        "color",
+        help="Set workspace title/status bar color",
+        description="Set workspace color via named preset or hex value",
+    )
+    color_parser.add_argument(
+        "value",
+        nargs="?",
+        type=str,
+        default=None,
+        help="Color preset name (yellow, blue, green, red, orange, purple) or hex (#RRGGBB)",
+    )
+
     # ----- atdd sync -----
     sync_parser = subparsers.add_parser(
         "sync",
@@ -895,6 +909,12 @@ Phase descriptions:
             wmbt_id=args.wmbt_id,
             force=args.force,
         )
+
+    # atdd color [value]
+    elif args.command == "color":
+        from atdd.coach.commands.color import ColorManager
+        manager = ColorManager()
+        return manager.color(value=args.value)
 
     # atdd sync
     elif args.command == "sync":

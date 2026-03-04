@@ -12,3 +12,5 @@ github:
   project_number: 1
   project_id: PVT_kwHOAIbyOM4BPpKf
   field_schema: atdd/coach/schemas/project_fields.schema.json
+workspace:
+  color: '#FFC107'

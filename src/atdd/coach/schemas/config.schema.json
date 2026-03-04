@@ -163,6 +163,18 @@
       "required": ["repo", "project_number", "project_id"],
       "additionalProperties": false
     },
+    "workspace": {
+      "type": "object",
+      "description": "Workspace appearance settings",
+      "properties": {
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Workspace title/status bar background color (hex)"
+        }
+      },
+      "additionalProperties": false
+    },
     "coach": {
       "type": "object",
       "description": "Coach agent validation settings",
