@@ -83,14 +83,31 @@ def write_workspace(target_dir: Path) -> None:
         folders.remove(main_entry)
         folders.insert(0, main_entry)
 
+    # Resolve background color: saved in config → default yellow
+    bg = "#FFC107"
+    config_path = target_dir / ".atdd" / "config.yaml"
+    if config_path.exists():
+        try:
+            with open(config_path) as f:
+                config = yaml.safe_load(f) or {}
+            saved = config.get("workspace", {}).get("color")
+            if saved:
+                bg = saved
+        except Exception:
+            pass
+
+    # Compute foreground via WCAG relative luminance
+    from atdd.coach.commands.color import ColorManager
+    fg = ColorManager._foreground(bg)
+
     workspace = {
         "folders": folders,
         "settings": {
             "workbench.colorCustomizations": {
-                "titleBar.activeBackground": "#FFC107",
-                "titleBar.activeForeground": "#000000",
-                "statusBar.background": "#FFC107",
-                "statusBar.foreground": "#000000",
+                "titleBar.activeBackground": bg,
+                "titleBar.activeForeground": fg,
+                "statusBar.background": bg,
+                "statusBar.foreground": fg,
             },
         },
     }
