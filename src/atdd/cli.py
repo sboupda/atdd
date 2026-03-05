@@ -480,37 +480,73 @@ Phase descriptions:
     close_wmbt_top_parser.add_argument("wmbt_id", type=str, help="WMBT ID (e.g., D001, E003)")
     close_wmbt_top_parser.add_argument("--force", "-f", action="store_true", help="Close even if ATDD cycle checkboxes are unchecked")
 
-    # ----- atdd issue {open} -----
+    # ----- atdd issue <target> -----
     issue_parser = subparsers.add_parser(
         "issue",
-        help="GitHub issue commands",
-        description="Subcommands for GitHub issue operations"
+        help="Unified issue lifecycle command",
+        description=(
+            "Enter an existing issue (by number) or create a new one (by slug).\n\n"
+            "  atdd issue 126              Enter issue #126 (state-driven)\n"
+            "  atdd issue my-feature       Create new issue and enter at INIT\n"
+            "  atdd issue 126 --status RED Transition status\n"
+            "  atdd issue open             List open issues\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    issue_subparsers = issue_parser.add_subparsers(
-        dest="issue_command",
-        help="Issue commands"
+    issue_parser.add_argument(
+        "target",
+        type=str,
+        nargs="?",
+        help="Issue number (integer) to enter, slug (string) to create, or 'open' to list"
     )
-
-    # atdd issue open
-    open_parser = issue_subparsers.add_parser(
-        "open",
-        help="List open GitHub issues"
+    issue_parser.add_argument(
+        "--status", "-s",
+        type=str,
+        help="Transition issue to this status"
     )
-    open_parser.add_argument(
+    issue_parser.add_argument(
+        "--close-wmbt",
+        type=str,
+        dest="close_wmbt",
+        help="Close a WMBT sub-issue by ID"
+    )
+    issue_parser.add_argument(
+        "--force", "-f",
+        action="store_true",
+        help="Bypass gate/body checks (train still enforced)"
+    )
+    issue_parser.add_argument(
         "--label", "-l",
         type=str,
-        help="Filter by label"
+        help="Filter by label (for 'open' target)"
     )
-    open_parser.add_argument(
+    issue_parser.add_argument(
         "--limit", "-n",
         type=int,
         default=30,
-        help="Maximum number of issues (default: 30)"
+        help="Maximum issues to list (for 'open' target, default: 30)"
     )
-    open_parser.add_argument(
+    issue_parser.add_argument(
         "--assignee",
         type=str,
-        help="Filter by assignee login"
+        help="Filter by assignee (for 'open' target)"
+    )
+    issue_parser.add_argument(
+        "--type", "-t",
+        type=str,
+        default="implementation",
+        choices=["implementation", "migration", "refactor", "analysis", "planning", "cleanup", "tracking"],
+        help="Issue type for creation (default: implementation)"
+    )
+    issue_parser.add_argument(
+        "--train",
+        type=str,
+        help="Train ID to assign on creation"
+    )
+    issue_parser.add_argument(
+        "--archetypes", "-a",
+        type=str,
+        help="Comma-separated archetypes on creation (e.g., be,contracts,wmbt)"
     )
 
     # ----- atdd color [value] -----
@@ -951,18 +987,56 @@ Phase descriptions:
             force=args.force,
         )
 
-    # atdd issue {open}
+    # atdd issue <target>
     elif args.command == "issue":
-        if getattr(args, 'issue_command', None) == "open":
+        target = getattr(args, 'target', None)
+        if not target:
+            issue_parser.print_help()
+            return 0
+
+        # atdd issue open — list open issues
+        if target == "open":
             manager = IssueManager()
             return manager.open_issues(
                 label=getattr(args, 'label', None),
                 limit=getattr(args, 'limit', 30),
                 assignee=getattr(args, 'assignee', None),
             )
-        else:
-            issue_parser.print_help()
-            return 0
+
+        # Detect mode: integer → enter, string → create (future)
+        try:
+            issue_number = int(target)
+        except ValueError:
+            # Slug mode — create new issue and enter at INIT
+            from atdd.coach.commands.issue_lifecycle import IssueLifecycle
+            lifecycle = IssueLifecycle()
+            return lifecycle.create(
+                slug=target,
+                issue_type=getattr(args, 'type', 'implementation'),
+                train=getattr(args, 'train', None),
+                archetypes=getattr(args, 'archetypes', None),
+            )
+
+        # Mutations or enter
+        from atdd.coach.commands.issue_lifecycle import IssueLifecycle
+        lifecycle = IssueLifecycle()
+
+        if getattr(args, 'status', None):
+            return lifecycle.transition(
+                issue_number,
+                args.status,
+                force=getattr(args, 'force', False),
+            )
+
+        if getattr(args, 'close_wmbt', None):
+            return lifecycle.close_wmbt(
+                issue_number,
+                args.close_wmbt,
+                force=getattr(args, 'force', False),
+            )
+
+        # Default: enter existing issue
+        return lifecycle.enter(issue_number)
 
     # atdd color [value]
     elif args.command == "color":
