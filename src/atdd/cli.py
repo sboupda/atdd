@@ -8,17 +8,19 @@ The coach orchestrates all ATDD lifecycle operations:
 - status: Show platform status
 - registry: Update registries from source files
 - init: Initialize ATDD structure in consumer repos
-- new/list/update/archive/close-wmbt/branch: Manage GitHub Issues
+- issue: Unified issue lifecycle (create, enter, transition, close-wmbt)
+- list/branch: Issue shortcuts
 - sync: Sync ATDD rules to agent config files
 - gate: Verify agents loaded ATDD rules
 
 Usage:
     atdd init                                # Initialize ATDD in consumer repo
-    atdd new my-feature                      # Create new issue + WMBT sub-issues
+    atdd issue my-feature                    # Create new issue + WMBT sub-issues
+    atdd issue 11                            # Enter issue #11 (state-driven)
+    atdd issue 11 --status RED               # Transition issue status
+    atdd issue 11 --close-wmbt D005          # Close WMBT sub-issue
+    atdd issue open                          # List open issues
     atdd list                                # List all issues
-    atdd update 11 --status RED              # Update issue fields
-    atdd archive 11                          # Archive issue
-    atdd close-wmbt 11 D005                  # Close WMBT sub-issue
     atdd sync                                # Sync ATDD rules to agent configs
     atdd sync --verify                       # Check if files are in sync
     atdd sync --agent claude                 # Sync specific agent only
@@ -236,13 +238,13 @@ Examples:
   %(prog)s registry update contracts      Update contract registry only
   %(prog)s registry update telemetry      Update telemetry registry only
 
-  # Issue management
-  %(prog)s new my-feature                 Create GitHub issue + WMBT sub-issues
-  %(prog)s new my-feature --type migration
+  # Issue lifecycle (unified command)
+  %(prog)s issue my-feature               Create issue + WMBT sub-issues
+  %(prog)s issue 11                       Enter issue #11 (state-driven)
+  %(prog)s issue 11 --status RED          Transition issue status
+  %(prog)s issue 11 --close-wmbt D005     Close WMBT sub-issue
+  %(prog)s issue open                     List open issues
   %(prog)s list                           List all issues
-  %(prog)s update 11 --status RED         Update issue fields
-  %(prog)s archive 11                     Archive issue
-  %(prog)s close-wmbt 11 D005             Close WMBT sub-issue
   %(prog)s branch 69                      Create worktree from issue #69
   %(prog)s branch 69 --prefix fix         Override branch prefix
 
@@ -402,8 +404,8 @@ Phase descriptions:
     # ----- atdd new <slug> -----
     new_parser = subparsers.add_parser(
         "new",
-        help="Create new issue with WMBT sub-issues",
-        description="Create a new GitHub Issue with Project v2 fields and WMBT sub-issues"
+        help="[DEPRECATED] Use 'atdd issue <slug>' instead",
+        description="DEPRECATED: Use 'atdd issue <slug>' instead.\n\nCreate a new GitHub Issue with Project v2 fields and WMBT sub-issues"
     )
     new_parser.add_argument(
         "slug",
@@ -439,14 +441,14 @@ Phase descriptions:
     # ----- atdd archive <issue_number> -----
     archive_top_parser = subparsers.add_parser(
         "archive",
-        help="Archive an issue (close parent + sub-issues)"
+        help="[DEPRECATED] Use 'atdd issue <N> --status COMPLETE' instead"
     )
     archive_top_parser.add_argument("session_id", type=str, help="Issue number to archive")
 
     # ----- atdd update <issue_number> -----
     update_top_parser = subparsers.add_parser(
         "update",
-        help="Update issue Project fields and labels"
+        help="[DEPRECATED] Use 'atdd issue <N> --status <S>' instead"
     )
     update_top_parser.add_argument("session_id", type=str, help="Issue number")
     update_top_parser.add_argument("--status", "-s", type=str, help="ATDD Status (INIT/PLANNED/RED/GREEN/REFACTOR/COMPLETE/BLOCKED)")
@@ -474,7 +476,7 @@ Phase descriptions:
     # ----- atdd close-wmbt <issue_number> <wmbt_id> -----
     close_wmbt_top_parser = subparsers.add_parser(
         "close-wmbt",
-        help="Close a WMBT sub-issue"
+        help="[DEPRECATED] Use 'atdd issue <N> --close-wmbt <ID>' instead"
     )
     close_wmbt_top_parser.add_argument("session_id", type=str, help="Parent issue number")
     close_wmbt_top_parser.add_argument("wmbt_id", type=str, help="WMBT ID (e.g., D001, E003)")
@@ -936,12 +938,14 @@ Phase descriptions:
         initializer = ProjectInitializer()
         return initializer.init(force=args.force, worktree_layout=args.worktree_layout)
 
-    # atdd new <slug>
+    # atdd new <slug> — DEPRECATED, delegates to atdd issue <slug>
     elif args.command == "new":
-        manager = IssueManager()
-        return manager.new(
+        _deprecation_warning("atdd new <slug>", "atdd issue <slug>")
+        from atdd.coach.commands.issue_lifecycle import IssueLifecycle
+        lifecycle = IssueLifecycle()
+        return lifecycle.create(
             slug=args.slug,
-            issue_type=args.type,
+            issue_type=getattr(args, 'type', 'implementation'),
             train=getattr(args, 'train', None),
             archetypes=getattr(args, 'archetypes', None),
         )
@@ -951,13 +955,28 @@ Phase descriptions:
         manager = IssueManager()
         return manager.list()
 
-    # atdd archive <issue_id> (top-level shorthand)
+    # atdd archive <issue_id> — DEPRECATED, delegates to atdd issue <N> --status COMPLETE
     elif args.command == "archive":
-        manager = IssueManager()
-        return manager.archive(issue_id=args.session_id)
+        _deprecation_warning("atdd archive <N>", "atdd issue <N> --status COMPLETE")
+        from atdd.coach.commands.issue_lifecycle import IssueLifecycle
+        lifecycle = IssueLifecycle()
+        issue_number = int(args.session_id)
+        return lifecycle.transition(issue_number, "COMPLETE", force=False)
 
-    # atdd update <issue_id> (top-level shorthand)
+    # atdd update <issue_id> — DEPRECATED, delegates to atdd issue <N> --status <S>
     elif args.command == "update":
+        status = getattr(args, 'status', None)
+        if status:
+            _deprecation_warning("atdd update <N> --status <S>", "atdd issue <N> --status <S>")
+            from atdd.coach.commands.issue_lifecycle import IssueLifecycle
+            lifecycle = IssueLifecycle()
+            issue_number = int(args.session_id)
+            return lifecycle.transition(
+                issue_number, status,
+                force=getattr(args, 'force', False),
+            )
+        # Non-status field updates have no atdd issue equivalent yet — pass through
+        _deprecation_warning("atdd update", "atdd issue")
         manager = IssueManager()
         return manager.update(
             issue_id=args.session_id,
@@ -978,12 +997,15 @@ Phase descriptions:
             prefix=getattr(args, 'prefix', None),
         )
 
-    # atdd close-wmbt <issue_id> <wmbt_id> (top-level shorthand)
+    # atdd close-wmbt <issue_id> <wmbt_id> — DEPRECATED, delegates to atdd issue <N> --close-wmbt <ID>
     elif args.command == "close-wmbt":
-        manager = IssueManager()
-        return manager.close_wmbt(
-            issue_id=args.session_id,
-            wmbt_id=args.wmbt_id,
+        _deprecation_warning("atdd close-wmbt <N> <ID>", "atdd issue <N> --close-wmbt <ID>")
+        from atdd.coach.commands.issue_lifecycle import IssueLifecycle
+        lifecycle = IssueLifecycle()
+        issue_number = int(args.session_id)
+        return lifecycle.close_wmbt(
+            issue_number,
+            args.wmbt_id,
             force=args.force,
         )
 
