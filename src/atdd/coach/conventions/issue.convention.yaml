@@ -248,13 +248,19 @@ github_issue_tracking:
 
   cli_commands:
     init: "atdd init — bootstraps labels, Project v2, custom fields, workflow"
-    new: "atdd new <slug> — creates parent issue + WMBT sub-issues"
+    issue_create: "atdd issue <slug> — creates parent issue + WMBT sub-issues"
+    issue_enter: "atdd issue <NN> — enters issue (state-driven context + worktree)"
+    issue_transition: "atdd issue <NN> --status <S> — transitions status + swaps labels"
+    issue_close_wmbt: "atdd issue <NN> --close-wmbt <ID> — closes WMBT sub-issue"
+    issue_open: "atdd issue open — lists open issues"
     list: "atdd list — queries Project items (parent issues only)"
-    update: "atdd update <NN> --status <S> — updates Project fields + labels"
-    close_wmbt: "atdd close-wmbt <NN> <WMBT_ID> — closes WMBT sub-issue"
-    archive: "atdd archive <NN> — closes parent + all sub-issues"
     branch: "atdd branch <NN> — creates worktree branch from issue metadata"
     validate: "atdd validate coach — validates Project fields + sub-issue state"
+    # Deprecated aliases (still work, print warning):
+    # atdd new <slug>              → atdd issue <slug>
+    # atdd update <NN> --status <S> → atdd issue <NN> --status <S>
+    # atdd close-wmbt <NN> <ID>    → atdd issue <NN> --close-wmbt <ID>
+    # atdd archive <NN>            → atdd issue <NN> --status COMPLETE
 
   hard_dependencies:
     - "gh CLI must be installed and authenticated"

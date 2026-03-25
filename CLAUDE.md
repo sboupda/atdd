@@ -200,7 +200,7 @@ agents:
     audits: "src/atdd/coder/validators/*.py"
 
 # Session Planning (Design before implementation)
-# Note: atdd-sessions/ is historical; new issues are GitHub Issues via `atdd new`
+# Note: atdd-sessions/ is historical; new issues are GitHub Issues via `atdd issue`
 sessions:
   # Consumer repo paths (historical — legacy local session files)
   directory: "atdd-sessions/"
@@ -213,13 +213,13 @@ sessions:
 
   commands:
     init: "atdd init                    # Initialize .atdd/ and GitHub infrastructure"
-    new: "atdd new my-feature            # Create SESSION-NN-my-feature.md"
-    list: "atdd list                     # List all issues"
-    archive: "atdd archive 11           # Archive issue (close parent + sub-issues)"
+    new: "atdd issue my-feature           # Create issue + WMBT sub-issues"
+    list: "atdd issue open               # List open issues"
+    archive: "atdd issue 11 --status COMPLETE  # Complete issue"
 
   workflow:
     init: "Run 'atdd init' to bootstrap .atdd/ config and GitHub infrastructure"
-    create: "Run 'atdd new <slug>' to create new session from template"
+    create: "Run 'atdd issue <slug>' to create new issue from template"
     fill: "Fill ALL sections - write 'N/A' if not applicable, never omit"
     track: "Update Progress Tracker and Session Log after each work item"
     validate: "atdd validate coach"
@@ -583,12 +583,13 @@ issues:
 
   commands:
     init: "atdd init                              # Bootstrap .atdd/ + GitHub infrastructure"
-    new: "atdd new <slug>                          # Create parent issue + WMBT sub-issues"
-    new_with_opts: "atdd new <slug> --archetypes be,contracts --train <id>"
-    list: "atdd list                               # List all issues (from GitHub)"
-    update: "atdd update <N> --status <STATUS>     # Update Project fields + swap labels"
-    close_wmbt: "atdd close-wmbt <N> <WMBT_ID>     # Close a WMBT sub-issue"
-    archive: "atdd archive <N>                     # Close parent + all sub-issues"
+    new: "atdd issue <slug>                        # Create parent issue + WMBT sub-issues"
+    new_with_opts: "atdd issue <slug> --archetypes be,contracts --train <id>"
+    enter: "atdd issue <N>                         # Enter issue (state-driven context)"
+    list: "atdd issue open                         # List open issues"
+    list_all: "atdd list                           # List all issues (from GitHub)"
+    update: "atdd issue <N> --status <STATUS>      # Transition status + swap labels"
+    close_wmbt: "atdd issue <N> --close-wmbt <ID>  # Close a WMBT sub-issue"
     validate: "atdd validate coach                 # Validate Project fields + sub-issue state"
 
   archetypes:
@@ -618,7 +619,7 @@ state_machine:
     BLOCKED: [INIT, PLANNED, RED, GREEN, REFACTOR, OBSOLETE]
     COMPLETE: []
     OBSOLETE: []
-  command: "atdd update <N> --status <STATUS>"
+  command: "atdd issue <N> --status <STATUS>"
   rules:
     - "Train field required past PLANNED (enforced by CLI + validator)"
     - "Labels swapped automatically (atdd:RED → atdd:GREEN)"

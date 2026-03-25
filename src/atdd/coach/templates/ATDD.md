@@ -297,12 +297,13 @@ issues:
 
   commands:
     init: "atdd init                              # Bootstrap .atdd/ + GitHub infrastructure"
-    new: "atdd new <slug>                          # Create parent issue + WMBT sub-issues"
-    new_with_opts: "atdd new <slug> --archetypes be,contracts --train <id>"
-    list: "atdd list                               # List all issues (from GitHub)"
-    update: "atdd update <N> --status <STATUS>     # Update Project fields + swap labels"
-    close_wmbt: "atdd close-wmbt <N> <WMBT_ID>     # Close a WMBT sub-issue"
-    archive: "atdd archive <N>                     # Close parent + all sub-issues"
+    new: "atdd issue <slug>                        # Create parent issue + WMBT sub-issues"
+    new_with_opts: "atdd issue <slug> --archetypes be,contracts --train <id>"
+    enter: "atdd issue <N>                         # Enter issue (state-driven context)"
+    list: "atdd issue open                         # List open issues"
+    list_all: "atdd list                           # List all issues (from GitHub)"
+    update: "atdd issue <N> --status <STATUS>      # Transition status + swap labels"
+    close_wmbt: "atdd issue <N> --close-wmbt <ID>  # Close a WMBT sub-issue"
     validate: "atdd validate coach                 # Validate Project fields + sub-issue state"
 
   archetypes:
@@ -332,7 +333,7 @@ state_machine:
     BLOCKED: [INIT, PLANNED, RED, GREEN, REFACTOR, OBSOLETE]
     COMPLETE: []
     OBSOLETE: []
-  command: "atdd update <N> --status <STATUS>"
+  command: "atdd issue <N> --status <STATUS>"
   rules:
     - "Train field required past PLANNED (enforced by CLI + validator)"
     - "Labels swapped automatically (atdd:RED → atdd:GREEN)"
