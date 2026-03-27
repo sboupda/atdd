@@ -26,7 +26,7 @@
         },
         "phase": {
           "type": "string",
-          "enum": ["RED", "GREEN", "REFACTOR"]
+          "enum": ["RED", "GREEN", "SMOKE", "REFACTOR"]
         }
       }
     },

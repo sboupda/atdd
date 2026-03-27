@@ -20,13 +20,13 @@ journey_tests:
     format: |
       # URN: test:train:{train_id}:{HARNESS}-{NNN}-{slug}
       # Train: train:{train_id}
-      # Phase: RED|GREEN|REFACTOR
+      # Phase: RED|GREEN|SMOKE|REFACTOR
       # Layer: assembly
 
     rules:
       - "Train: header MUST reference a valid train URN"
       - "Train URN MUST match pattern: train:{NNNN}-{kebab-case}"
-      - "Phase MUST be one of: RED, GREEN, REFACTOR"
+      - "Phase MUST be one of: RED, GREEN, SMOKE, REFACTOR"
       - "Layer MUST be 'assembly' for journey tests"
       - "Acceptance: and WMBT: lines MUST NOT appear in journey tests"
       - "Exactly one test: URN per file"

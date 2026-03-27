@@ -308,7 +308,7 @@ class IssueLifecycle:
 
         Args:
             issue_number: GitHub issue number.
-            status: Target status (e.g., PLANNED, RED, GREEN, REFACTOR, COMPLETE).
+            status: Target status (e.g., PLANNED, RED, GREEN, SMOKE, REFACTOR, COMPLETE).
             force: Bypass gate/body checks (train still enforced).
 
         Returns:
