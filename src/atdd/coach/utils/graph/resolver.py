@@ -1092,14 +1092,14 @@ class TestResolver(BaseResolver):
     _ACCEPTANCE_RE = re.compile(r"(?:#|//)\s*[Aa]cceptance:\s*([^\s]+)")
     _WMBT_RE = re.compile(r"(?:#|//)\s*[Ww][Mm][Bb][Tt]:\s*([^\s]+)")
     _TRAIN_RE = re.compile(r"(?:#|//)\s*[Tt]rain:\s*([^\s]+)")
-    _PHASE_RE = re.compile(r"(?:#|//)\s*[Pp]hase:\s*(RED|GREEN|REFACTOR)")
+    _PHASE_RE = re.compile(r"(?:#|//)\s*[Pp]hase:\s*(RED|GREEN|SMOKE|REFACTOR)")
     _LAYER_RE = re.compile(
         r"(?:#|//)\s*[Ll]ayer:\s*(presentation|application|domain|integration|assembly)"
     )
     _TESTED_BY_RE = re.compile(r"(?:#|//)\s*-\s*(test:[^\s]+)")
 
     # Valid phases and layers for test headers
-    VALID_PHASES = {"RED", "GREEN", "REFACTOR"}
+    VALID_PHASES = {"RED", "GREEN", "SMOKE", "REFACTOR"}
     VALID_TEST_LAYERS = {"presentation", "application", "domain", "integration", "assembly"}
 
     @property

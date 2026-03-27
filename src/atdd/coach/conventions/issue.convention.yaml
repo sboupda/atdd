@@ -87,7 +87,7 @@ workflow:
         - "All tester validators pass"
 
     # -------------------------------------------------------------------------
-    # PHASE 3: CODER (GREEN + REFACTOR)
+    # PHASE 3: TESTER (SMOKE) + CODER (GREEN + REFACTOR)
     # -------------------------------------------------------------------------
     coder:
       order: 3
@@ -311,11 +311,12 @@ github_issue_tracking:
         purpose: "Step name and URN on a single metadata line"
         required: true
       - heading: "### ATDD Cycle"
-        purpose: "Three checkboxes for RED/GREEN/REFACTOR phases"
+        purpose: "Four checkboxes for RED/GREEN/SMOKE/REFACTOR phases"
         required: true
         content: |
           - [ ] RED: failing test written
           - [ ] GREEN: implementation passes test
+          - [ ] SMOKE: integration test against real infrastructure
           - [ ] REFACTOR: architecture compliance verified
       - heading: "### Acceptance Criteria"
         purpose: "WMBT-specific acceptance criteria from plan YAML"
@@ -326,7 +327,7 @@ github_issue_tracking:
 
     validation_rules:
       - "H2 heading must match wmbt:{wagon}:{wmbt_id} pattern"
-      - "ATDD Cycle must have exactly 3 checkboxes (RED, GREEN, REFACTOR)"
+      - "ATDD Cycle must have exactly 4 checkboxes (RED, GREEN, SMOKE, REFACTOR)"
       - "Acceptance Criteria must have at least 1 bullet point"
       - "Test File must contain a valid file path"
       - "No session-level metadata (no train, feature, branch, archetypes)"
@@ -463,7 +464,7 @@ filesystem:
 session_types:
   implementation:
     description: "Building new features via ATDD cycle"
-    focus: "WMBT decomposition, RED→GREEN→REFACTOR phases"
+    focus: "WMBT decomposition, RED→GREEN→SMOKE→REFACTOR phases"
 
   migration:
     description: "Moving from one architecture/pattern to another"
@@ -737,7 +738,7 @@ sections:
 
       - name: "WMBT Status"
         format: "table"
-        columns: ["WMBT", "Description", "RED", "GREEN", "REFACTOR"]
+        columns: ["WMBT", "Description", "RED", "GREEN", "SMOKE", "REFACTOR"]
         when: "type == implementation"
         status_values: ["TODO", "IN_PROGRESS", "DONE", "SKIPPED", "N/A"]
 

@@ -22,7 +22,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 # Statuses where branch + gate are triggered
-_BRANCH_STATUSES = {"PLANNED", "RED", "GREEN", "REFACTOR", "BLOCKED"}
+_BRANCH_STATUSES = {"PLANNED", "RED", "GREEN", "SMOKE", "REFACTOR", "BLOCKED"}
 _TERMINAL_STATUSES = {"COMPLETE", "OBSOLETE"}
 
 

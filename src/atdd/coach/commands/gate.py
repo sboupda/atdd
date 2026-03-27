@@ -24,7 +24,7 @@ class ATDDGate:
     KEY_CONSTRAINTS = [
         "No ad-hoc tests - follow ATDD conventions",
         "Domain layer NEVER imports from other layers",
-        "Phase transitions require quality gates (INIT → PLANNED → RED → GREEN → REFACTOR)",
+        "Phase transitions require quality gates (INIT → PLANNED → RED → GREEN → SMOKE → REFACTOR)",
     ]
 
     def __init__(self, target_dir: Optional[Path] = None):

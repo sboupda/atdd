@@ -66,12 +66,13 @@
                 { "properties": { "name": { "const": "atdd:PLANNED" },  "color": { "const": "B60205" }, "description": { "const": "ATDD phase: PLANNED" } } },
                 { "properties": { "name": { "const": "atdd:RED" },      "color": { "const": "D93F0B" }, "description": { "const": "ATDD phase: RED" } } },
                 { "properties": { "name": { "const": "atdd:GREEN" },    "color": { "const": "0E8A16" }, "description": { "const": "ATDD phase: GREEN" } } },
+                { "properties": { "name": { "const": "atdd:SMOKE" },    "color": { "const": "1D76DB" }, "description": { "const": "ATDD phase: SMOKE" } } },
                 { "properties": { "name": { "const": "atdd:REFACTOR" }, "color": { "const": "006B75" }, "description": { "const": "ATDD phase: REFACTOR" } } },
                 { "properties": { "name": { "const": "atdd:COMPLETE" }, "color": { "const": "6F42C1" }, "description": { "const": "ATDD phase: COMPLETE" } } },
                 { "properties": { "name": { "const": "atdd:BLOCKED" },  "color": { "const": "E4E669" }, "description": { "const": "ATDD phase: BLOCKED" } } }
               ],
-              "minItems": 7,
-              "maxItems": 7
+              "minItems": 8,
+              "maxItems": 8
             }
           }
         },
