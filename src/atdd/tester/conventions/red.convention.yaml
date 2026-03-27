@@ -102,7 +102,7 @@ runtime_placement:
       # URN: test:{wagon}:{feature}:{WMBT_ID}-{HARNESS}-{NNN}-{slug}
       # Acceptance: acc:{wagon}:{WMBT_ID}-{HARNESS}-{NNN}[-{slug}]
       # WMBT: wmbt:{wagon}:{WMBT_ID}
-      # Phase: RED|GREEN|REFACTOR
+      # Phase: RED|GREEN|SMOKE|REFACTOR
       # Layer: presentation|application|domain|integration|assembly
       # Runtime: {python|supabase|dart}
       # Purpose: {acceptance criteria purpose}
@@ -110,7 +110,7 @@ runtime_placement:
     journey_test_format: |
       # URN: test:train:{train_id}:{HARNESS}-{NNN}-{slug}
       # Train: train:{train_id}
-      # Phase: RED|GREEN|REFACTOR
+      # Phase: RED|GREEN|SMOKE|REFACTOR
       # Layer: assembly
       # Runtime: {python|supabase|dart}
       # Purpose: {journey test purpose}
@@ -119,20 +119,20 @@ runtime_placement:
       - "Every test file must include exactly one test: URN (file-level identity)"
       - "Acceptance tests MUST include Acceptance: and WMBT: lines, MUST omit Train:"
       - "Journey tests MUST include Train: line, MUST omit Acceptance: and WMBT:"
-      - "Phase MUST be one of RED, GREEN, REFACTOR"
+      - "Phase MUST be one of RED, GREEN, SMOKE, REFACTOR"
       - "Layer MUST be one of presentation, application, domain, integration, assembly"
 
     format: |
       # URN: test:{wagon}:{feature}:{WMBT_ID}-{HARNESS}-{NNN}-{slug}
       # Acceptance: acc:{wagon}:{WMBT_ID}-{HARNESS}-{NNN}[-{slug}]
       # WMBT: wmbt:{wagon}:{WMBT_ID}
-      # Phase: {RED|GREEN|REFACTOR}
+      # Phase: {RED|GREEN|SMOKE|REFACTOR}
       # Layer: {layer}
       # Runtime: {python|supabase|dart}
       # Purpose: {acceptance criteria purpose}
       """
       RED Test for test:{wagon}:{feature}:{WMBT_ID}-{HARNESS}-{NNN}-{slug}
-      wagon: {wagon-slug} | feature: {feature-slug} | phase: {RED|GREEN|REFACTOR}
+      wagon: {wagon-slug} | feature: {feature-slug} | phase: {RED|GREEN|SMOKE|REFACTOR}
       WMBT: {wmbt URN}
       Purpose: {acceptance criteria purpose}
       """

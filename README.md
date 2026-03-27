@@ -9,13 +9,15 @@ flowchart LR
     A[Job to be Done] -->|Planner| B[Wagon + Acceptance Criteria]
     B -->|Tester| C[RED Tests]
     C -->|Coder| D[GREEN Code]
-    D -->|Coder| E[REFACTOR]
+    D -->|Tester| F[SMOKE Tests]
+    F -->|Coder| E[REFACTOR]
     E -.->|feedback| B
 
     subgraph "ATDD Lifecycle"
         B
         C
         D
+        F
         E
     end
 ```
@@ -102,7 +104,7 @@ your-project/
 ```
 
 Also sets up on GitHub:
-- Labels: `atdd-issue`, `atdd-wmbt`, `atdd:RED`, `atdd:GREEN`, `atdd:REFACTOR`, archetype labels
+- Labels: `atdd-issue`, `atdd-wmbt`, `atdd:RED`, `atdd:GREEN`, `atdd:SMOKE`, `atdd:REFACTOR`, archetype labels
 - Project v2 custom fields: `ATDD:Status`, `ATDD:Train`, `ATDD:Archetypes`, etc.
 
 ### Worktree Layout
@@ -169,9 +171,9 @@ atdd archive <N>                             # Close parent + all sub-issues
 
 **State machine transitions:**
 ```
-INIT → PLANNED → RED → GREEN → REFACTOR → COMPLETE
-         ↕         ↕      ↕        ↕
-       BLOCKED   BLOCKED BLOCKED  BLOCKED → OBSOLETE
+INIT → PLANNED → RED → GREEN → SMOKE → REFACTOR → COMPLETE
+         ↕         ↕      ↕      ↕       ↕
+       BLOCKED   BLOCKED BLOCKED BLOCKED BLOCKED → OBSOLETE
 ```
 
 **Archetypes:** `db`, `be`, `fe`, `contracts`, `wmbt`, `wagon`, `train`, `telemetry`, `migrations`

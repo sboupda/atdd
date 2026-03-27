@@ -217,7 +217,7 @@ def test_v3_phase_and_layer_values():
     SPEC-V3-003: Phase and Layer must be valid enum values.
 
     Per URN Spec V3 S10 R12,13:
-    - Phase: RED | GREEN | REFACTOR
+    - Phase: RED | GREEN | SMOKE | REFACTOR
     - Layer: presentation | application | domain | integration | assembly
     """
     violations = []

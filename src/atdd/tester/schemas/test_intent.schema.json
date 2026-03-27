@@ -30,8 +30,8 @@
         },
         "phase": {
           "type": "string",
-          "description": "ATDD phase (RED, GREEN, REFACTOR)",
-          "enum": ["RED", "GREEN", "REFACTOR"]
+          "description": "ATDD phase (RED, GREEN, SMOKE, REFACTOR)",
+          "enum": ["RED", "GREEN", "SMOKE", "REFACTOR"]
         }
       }
     },

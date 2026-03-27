@@ -451,7 +451,7 @@ Phase descriptions:
         help="[DEPRECATED] Use 'atdd issue <N> --status <S>' instead"
     )
     update_top_parser.add_argument("session_id", type=str, help="Issue number")
-    update_top_parser.add_argument("--status", "-s", type=str, help="ATDD Status (INIT/PLANNED/RED/GREEN/REFACTOR/COMPLETE/BLOCKED)")
+    update_top_parser.add_argument("--status", "-s", type=str, help="ATDD Status (INIT/PLANNED/RED/GREEN/SMOKE/REFACTOR/COMPLETE/BLOCKED)")
     update_top_parser.add_argument("--phase", "-p", type=str, help="ATDD Phase (Planner/Tester/Coder)")
     update_top_parser.add_argument("--branch", "-b", type=str, help="ATDD Branch name")
     update_top_parser.add_argument("--train", type=str, help="ATDD Train URN")

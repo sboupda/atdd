@@ -64,12 +64,13 @@
                 { "properties": { "name": { "const": "PLANNED" }, "color": { "const": "ORANGE" }, "description": { "const": "Planning complete" } } },
                 { "properties": { "name": { "const": "RED" }, "color": { "const": "RED" }, "description": { "const": "Writing failing tests" } } },
                 { "properties": { "name": { "const": "GREEN" }, "color": { "const": "GREEN" }, "description": { "const": "Making tests pass" } } },
+                { "properties": { "name": { "const": "SMOKE" }, "color": { "const": "BLUE" }, "description": { "const": "Integration testing against real infrastructure" } } },
                 { "properties": { "name": { "const": "REFACTOR" }, "color": { "const": "BLUE" }, "description": { "const": "Refactoring code" } } },
                 { "properties": { "name": { "const": "COMPLETE" }, "color": { "const": "PURPLE" }, "description": { "const": "Session complete" } } },
                 { "properties": { "name": { "const": "BLOCKED" }, "color": { "const": "GRAY" }, "description": { "const": "Session blocked" } } }
               ],
-              "minItems": 7,
-              "maxItems": 7
+              "minItems": 8,
+              "maxItems": 8
             }
           },
           "required": ["name", "data_type", "options"]
@@ -266,11 +267,12 @@
               "prefixItems": [
                 { "properties": { "name": { "const": "RED" }, "color": { "const": "RED" }, "description": { "const": "Failing test written" } } },
                 { "properties": { "name": { "const": "GREEN" }, "color": { "const": "GREEN" }, "description": { "const": "Implementation passes" } } },
+                { "properties": { "name": { "const": "SMOKE" }, "color": { "const": "BLUE" }, "description": { "const": "Integration test verified" } } },
                 { "properties": { "name": { "const": "REFACTOR" }, "color": { "const": "BLUE" }, "description": { "const": "Refactoring complete" } } },
                 { "properties": { "name": { "const": "DONE" }, "color": { "const": "PURPLE" }, "description": { "const": "WMBT complete" } } }
               ],
-              "minItems": 4,
-              "maxItems": 4
+              "minItems": 5,
+              "maxItems": 5
             }
           },
           "required": ["name", "data_type", "options"]

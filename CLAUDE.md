@@ -1,6 +1,6 @@
 ---
 missions:
-  orchestrate_atdd: "ATDD lifecycle (planner → tester RED → coder GREEN → coder REFACTOR)"
+  orchestrate_atdd: "ATDD lifecycle (planner → tester RED → coder GREEN → tester SMOKE → coder REFACTOR)"
   validate_phase_transitions: "Phase transitions and quality gates per conventions and schemas"
   required: true
 
@@ -107,12 +107,20 @@ atdd_cycle:
       transitions: "RED → GREEN"
 
     - name: GREEN
+      agent: tester
+      task: "Verify against real infrastructure (SMOKE tests)"
+      conventions: "src/atdd/tester/conventions/smoke.convention.yaml"
+      audits: "src/atdd/tester/validators/test_smoke_*.py"
+      deliverables: ["smoke_test_paths"]
+      transitions: "GREEN → SMOKE"
+
+    - name: SMOKE
       agent: coder
       task: "REFACTOR to 4-layer architecture"
       conventions: "src/atdd/coder/conventions/refactor.convention.yaml"
       audits: "src/atdd/coder/validators/test_architecture_*.py"
       deliverables: ["refactor_paths"]
-      transitions: "GREEN → REFACTOR"
+      transitions: "SMOKE → REFACTOR"
 
     - name: REFACTOR
       status: complete
@@ -145,7 +153,7 @@ architecture:
   principles:
     - "Domain layer NEVER imports from other layers"
     - "Dependencies point inward only (integration → application → domain)"
-    - "Test first (RED → GREEN → REFACTOR)"
+    - "Test first (RED → GREEN → SMOKE → REFACTOR)"
     - "Wagons communicate via contracts only"
     - "composition.py/wagon.py are composition roots (survive refactoring)"
 
@@ -194,7 +202,7 @@ agents:
     audits: "src/atdd/tester/validators/*.py"
 
   coder:
-    role: "Implement GREEN code, then REFACTOR to clean architecture"
+    role: "Implement GREEN code, then REFACTOR to clean architecture (SMOKE between GREEN and REFACTOR)"
     conventions: "src/atdd/coder/conventions/*.yaml"
     schemas: "src/atdd/coder/schemas/*.json"
     audits: "src/atdd/coder/validators/*.py"
@@ -238,6 +246,7 @@ sessions:
   atdd_phases:
     RED: "Write failing tests from acceptances"
     GREEN: "Implement minimal code to pass tests"
+    SMOKE: "Verify against real infrastructure (HTTP, DB, auth)"
     REFACTOR: "Clean architecture, 4-layer compliance"
 
 # Quality Gates (Detailed in action files)
@@ -246,7 +255,8 @@ validations:
     INIT→PLANNED: "planner delivers wagon with acceptance criteria"
     PLANNED→RED: "tester delivers RED tests"
     RED→GREEN: "coder delivers passing tests"
-    GREEN→REFACTOR: "coder delivers clean architecture"
+    GREEN→SMOKE: "tester delivers smoke tests against real infrastructure"
+    SMOKE→REFACTOR: "coder delivers clean architecture"
 
   code_quality:
     - "Domain layer has no external dependencies"
@@ -269,6 +279,7 @@ conventions:
     - "filename.convention.yaml: URN-based test naming"
     - "contract.convention.yaml: schema validation"
     - "artifact.convention.yaml: artifact validation"
+    - "smoke.convention.yaml: SMOKE phase integration tests"
 
   coder:
     - "green.convention.yaml: GREEN phase (make tests pass)"
@@ -286,7 +297,7 @@ conventions:
 
 ---
 missions:
-  orchestrate_atdd: "ATDD lifecycle (planner → tester RED → coder GREEN → coder REFACTOR)"
+  orchestrate_atdd: "ATDD lifecycle (planner → tester RED → coder GREEN → tester SMOKE → coder REFACTOR)"
   validate_phase_transitions: "Phase transitions and quality gates per conventions and schemas"
   required: true
 
@@ -430,12 +441,20 @@ atdd_cycle:
       transitions: "RED → GREEN"
 
     - name: GREEN
+      agent: tester
+      task: "Verify against real infrastructure (SMOKE tests)"
+      conventions: "src/atdd/tester/conventions/smoke.convention.yaml"
+      audits: "src/atdd/tester/validators/test_smoke_*.py"
+      deliverables: ["smoke_test_paths"]
+      transitions: "GREEN → SMOKE"
+
+    - name: SMOKE
       agent: coder
       task: "REFACTOR to 4-layer architecture"
       conventions: "src/atdd/coder/conventions/refactor.convention.yaml"
       audits: "src/atdd/coder/validators/test_architecture_*.py"
       deliverables: ["refactor_paths"]
-      transitions: "GREEN → REFACTOR"
+      transitions: "SMOKE → REFACTOR"
 
     - name: REFACTOR
       status: complete
@@ -468,7 +487,7 @@ architecture:
   principles:
     - "Domain layer NEVER imports from other layers"
     - "Dependencies point inward only (integration → application → domain)"
-    - "Test first (RED → GREEN → REFACTOR)"
+    - "Test first (RED → GREEN → SMOKE → REFACTOR)"
     - "Wagons communicate via contracts only"
     - "composition.py/wagon.py are composition roots (survive refactoring)"
 
@@ -566,7 +585,7 @@ agents:
     audits: "src/atdd/tester/validators/*.py"
 
   coder:
-    role: "Implement GREEN code, then REFACTOR to clean architecture"
+    role: "Implement GREEN code, then REFACTOR to clean architecture (SMOKE between GREEN and REFACTOR)"
     conventions: "src/atdd/coder/conventions/*.yaml"
     schemas: "src/atdd/coder/schemas/*.json"
     audits: "src/atdd/coder/validators/*.py"
@@ -606,6 +625,7 @@ issues:
   atdd_phases:
     RED: "Write failing tests from acceptances"
     GREEN: "Implement minimal code to pass tests"
+    SMOKE: "Verify against real infrastructure (HTTP, DB, auth)"
     REFACTOR: "Clean architecture, 4-layer compliance"
 
 # State Machine (issue lifecycle transitions)
@@ -614,9 +634,10 @@ state_machine:
     INIT: [PLANNED, BLOCKED, OBSOLETE]
     PLANNED: [RED, BLOCKED, OBSOLETE]
     RED: [GREEN, BLOCKED, OBSOLETE]
-    GREEN: [REFACTOR, BLOCKED, OBSOLETE]
+    GREEN: [SMOKE, BLOCKED, OBSOLETE]
+    SMOKE: [REFACTOR, BLOCKED, OBSOLETE]
     REFACTOR: [COMPLETE, BLOCKED, OBSOLETE]
-    BLOCKED: [INIT, PLANNED, RED, GREEN, REFACTOR, OBSOLETE]
+    BLOCKED: [INIT, PLANNED, RED, GREEN, SMOKE, REFACTOR, OBSOLETE]
     COMPLETE: []
     OBSOLETE: []
   command: "atdd issue <N> --status <STATUS>"
@@ -630,7 +651,8 @@ validations:
     INIT→PLANNED: "planner delivers wagon with acceptance criteria"
     PLANNED→RED: "tester delivers RED tests"
     RED→GREEN: "coder delivers passing tests"
-    GREEN→REFACTOR: "coder delivers clean architecture"
+    GREEN→SMOKE: "tester delivers smoke tests against real infrastructure"
+    SMOKE→REFACTOR: "coder delivers clean architecture"
 
   code_quality:
     - "Domain layer has no external dependencies"
@@ -653,6 +675,7 @@ conventions:
     - "filename.convention.yaml: URN-based test naming"
     - "contract.convention.yaml: schema validation"
     - "artifact.convention.yaml: artifact validation"
+    - "smoke.convention.yaml: SMOKE phase integration tests"
 
   coder:
     - "green.convention.yaml: GREEN phase (make tests pass)"

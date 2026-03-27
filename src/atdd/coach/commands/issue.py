@@ -194,6 +194,7 @@ class IssueManager:
                 "### ATDD Cycle\n\n"
                 "- [ ] RED: failing test written\n"
                 "- [ ] GREEN: implementation passes test\n"
+                "- [ ] SMOKE: integration test against real infrastructure\n"
                 "- [ ] REFACTOR: architecture compliance verified\n\n"
                 "### Acceptance Criteria\n\n"
                 "{acceptance_criteria}\n\n"
@@ -1167,9 +1168,10 @@ class IssueManager:
         "INIT": {"PLANNED", "BLOCKED", "OBSOLETE"},
         "PLANNED": {"RED", "BLOCKED", "OBSOLETE"},
         "RED": {"GREEN", "BLOCKED", "OBSOLETE"},
-        "GREEN": {"REFACTOR", "BLOCKED", "OBSOLETE"},
+        "GREEN": {"SMOKE", "BLOCKED", "OBSOLETE"},
+        "SMOKE": {"REFACTOR", "BLOCKED", "OBSOLETE"},
         "REFACTOR": {"COMPLETE", "BLOCKED", "OBSOLETE"},
-        "BLOCKED": {"INIT", "PLANNED", "RED", "GREEN", "REFACTOR", "OBSOLETE"},
+        "BLOCKED": {"INIT", "PLANNED", "RED", "GREEN", "SMOKE", "REFACTOR", "OBSOLETE"},
         "COMPLETE": set(),
         "OBSOLETE": set(),
     }
@@ -1235,7 +1237,7 @@ class IssueManager:
             issue_body = issue.get("body", "") or ""
             issue_type = self._parse_issue_type(issue_body)
 
-            post_planned = {"RED", "GREEN", "REFACTOR", "COMPLETE"}
+            post_planned = {"RED", "GREEN", "SMOKE", "REFACTOR", "COMPLETE"}
             train_required = issue_type in self.TRAIN_REQUIRED_TYPES if issue_type else True
 
             if status in post_planned and train_required and not train:

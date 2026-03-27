@@ -22,7 +22,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 # Statuses where branch + gate are triggered
-_BRANCH_STATUSES = {"PLANNED", "RED", "GREEN", "REFACTOR", "BLOCKED"}
+_BRANCH_STATUSES = {"PLANNED", "RED", "GREEN", "SMOKE", "REFACTOR", "BLOCKED"}
 _TERMINAL_STATUSES = {"COMPLETE", "OBSOLETE"}
 
 
@@ -308,7 +308,7 @@ class IssueLifecycle:
 
         Args:
             issue_number: GitHub issue number.
-            status: Target status (e.g., PLANNED, RED, GREEN, REFACTOR, COMPLETE).
+            status: Target status (e.g., PLANNED, RED, GREEN, SMOKE, REFACTOR, COMPLETE).
             force: Bypass gate/body checks (train still enforced).
 
         Returns:

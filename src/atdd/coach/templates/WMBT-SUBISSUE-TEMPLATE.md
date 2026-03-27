@@ -7,6 +7,7 @@
 
 - [ ] RED: failing test written
 - [ ] GREEN: implementation passes test
+- [ ] SMOKE: integration test against real infrastructure
 - [ ] REFACTOR: architecture compliance verified
 
 ### Acceptance Criteria

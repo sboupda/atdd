@@ -66,7 +66,7 @@ def _load_valid_train_ids():
 
 
 # Post-PLANNED phases where Train field is required
-_POST_PLANNED_STATUSES = {"RED", "GREEN", "REFACTOR", "COMPLETE"}
+_POST_PLANNED_STATUSES = {"RED", "GREEN", "SMOKE", "REFACTOR", "COMPLETE"}
 
 
 def test_issues_have_train_field(github_issues, github_project_fields, github_project_items):
@@ -225,7 +225,7 @@ def test_issue_body_has_required_sections(github_issues):
 ALLOWED_BRANCH_PREFIXES = ("feat/", "fix/", "refactor/", "chore/", "docs/", "devops/")
 
 # Active statuses where branch must be set (excludes terminal COMPLETE/OBSOLETE)
-_ACTIVE_IMPL_STATUSES = {"RED", "GREEN", "REFACTOR"}
+_ACTIVE_IMPL_STATUSES = {"RED", "GREEN", "SMOKE", "REFACTOR"}
 
 _BRANCH_RE = re.compile(r"\| Branch \| (.+?) \|")
 
