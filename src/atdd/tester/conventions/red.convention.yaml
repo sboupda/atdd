@@ -119,7 +119,7 @@ runtime_placement:
       - "Every test file must include exactly one test: URN (file-level identity)"
       - "Acceptance tests MUST include Acceptance: and WMBT: lines, MUST omit Train:"
       - "Journey tests MUST include Train: line, MUST omit Acceptance: and WMBT:"
-      - "Phase MUST be one of RED, GREEN, REFACTOR"
+      - "Phase MUST be one of RED, GREEN, SMOKE, REFACTOR"
       - "Layer MUST be one of presentation, application, domain, integration, assembly"
 
     format: |

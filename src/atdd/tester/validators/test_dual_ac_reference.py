@@ -117,7 +117,7 @@ def test_all_tests_have_dual_ac_references():
                 f"  ACTION REQUIRED: Add this module docstring after header comments:\n"
                 f'  """\n'
                 f'  RED Test for {ac_from_header}\n'
-                f'  wagon: {{wagon}} | feature: {{feature}} | phase: {{RED|GREEN|REFACTOR}}\n'
+                f'  wagon: {{wagon}} | feature: {{feature}} | phase: {{RED|GREEN|SMOKE|REFACTOR}}\n'
                 f'  WMBT: {{wmbt URN}}\n'
                 f'  Purpose: {{acceptance criteria purpose}}\n'
                 f'  """\n'
@@ -126,7 +126,7 @@ def test_all_tests_have_dual_ac_references():
                 f"  # URN: test:{{wagon}}:{{feature}}:{{WMBT_ID}}-{{HARNESS}}-{{NNN}}-{{slug}}\n"
                 f"  # Acceptance: {ac_from_header}\n"
                 f"  # WMBT: wmbt:{{wagon}}:{{WMBT_ID}}\n"
-                f"  # Phase: RED|GREEN|REFACTOR\n"
+                f"  # Phase: RED|GREEN|SMOKE|REFACTOR\n"
                 f"  # Layer: presentation|application|domain|integration|assembly\n"
             )
 
@@ -142,12 +142,12 @@ def test_all_tests_have_dual_ac_references():
                 f"  # URN: test:{{wagon}}:{{feature}}:{{WMBT_ID}}-{{HARNESS}}-{{NNN}}-{{slug}}\n"
                 f"  # Acceptance: {ac_from_docstring}\n"
                 f"  # WMBT: wmbt:{{wagon}}:{{WMBT_ID}}\n"
-                f"  # Phase: RED|GREEN|REFACTOR\n"
+                f"  # Phase: RED|GREEN|SMOKE|REFACTOR\n"
                 f"  # Layer: presentation|application|domain|integration|assembly\n"
                 f"\n"
                 f"  Legacy format (also accepted):\n"
                 f"  # URN: {ac_from_docstring}\n"
-                f"  # Phase: {{RED|GREEN|REFACTOR}}\n"
+                f"  # Phase: {{RED|GREEN|SMOKE|REFACTOR}}\n"
             )
 
         # Check for match (allowing slugless to match slugged)
