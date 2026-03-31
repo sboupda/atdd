@@ -305,7 +305,7 @@ http_rest_api:
 
         error_handling:
           green: "Basic try/except with 500 responses"
-          refactor: "TODO(REFACTOR): Add custom exception handlers and status codes"
+          refactor: "Structured error responses per error-response.convention.yaml (commons:error:response contract)"
 
         validation:
           green: "Pydantic validates input automatically"
