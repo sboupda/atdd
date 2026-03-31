@@ -55,7 +55,7 @@ TRAIN_CONVENTION = ATDD_PKG_DIR / "coder" / "conventions" / "train.convention.ya
 
 _skip_no_trains = not TRAINS_DIR.exists()
 _skip_no_python = not (REPO_ROOT / "python").exists()
-_skip_no_e2e = not (REPO_ROOT / "e2e").exists()
+_skip_no_e2e = not E2E_CONFTEST.exists()
 _skip_no_web = not (REPO_ROOT / "web").exists()
 
 
