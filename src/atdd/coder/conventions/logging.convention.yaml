@@ -12,11 +12,18 @@ rationale: |
   CLI tools (src/atdd/) are exempt because print() is their primary output mechanism.
 
 scan_scope:
-  include:
-    - "python/"
+  LOG-001:
+    include:
+      - "python/"
+    note: "print() check applies to consumer product code only. ATDD toolkit (src/atdd/) is a CLI tool where print() is the intentional output mechanism."
+  LOG-002:
+    include:
+      - "python/"
+      - "src/atdd/"
+    note: "Structured logging check applies to both consumer code and the ATDD toolkit itself (dogfooding)."
   exclude:
-    - "python/*/tests/"
-    - "python/*/test/"
+    - "*/tests/"
+    - "*/test/"
     - "__pycache__/"
     - "__init__.py"
     - "test_*.py"

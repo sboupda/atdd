@@ -219,7 +219,7 @@ class IssueLifecycle:
                     )
                     print(f"  Updated ATDD Branch -> {branch_name}")
         except Exception as e:
-            logger.debug("Could not update Branch field: %s", e)
+            logger.debug("Could not update Branch field: %s", e, extra={"error": str(e)})
 
         # Refresh workspace
         try:

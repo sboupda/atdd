@@ -8,7 +8,13 @@ Validates:
 Conventions from:
 - atdd/coder/conventions/logging.convention.yaml
 
-Scan scope: REPO_ROOT/python/ (consumer product code only)
+Scan scope:
+- REPO_ROOT/python/ (consumer product code)
+- ATDD_PKG_DIR (src/atdd/ — toolkit dogfooding)
+
+LOG-001 exemptions:
+- ATDD toolkit (src/atdd/) — CLI tool where print() is the primary output mechanism
+- LOG-001 only applies to consumer product code (python/)
 """
 
 import pytest
@@ -32,35 +38,33 @@ LOGGING_CONVENTION = ATDD_PKG_DIR / "coder" / "conventions" / "logging.conventio
 # Logger method names that require extra= for structured context
 LOG_METHODS = {"debug", "info", "warning", "error", "critical", "exception", "log"}
 
+# Receiver variable names that indicate a logging call (not Streamlit st.info, etc.)
+LOGGER_RECEIVER_NAMES = {"logger", "log", "_logger", "_log", "logging", "LOG"}
 
-def find_python_files() -> List[Path]:
-    """
-    Find non-test Python files in python/ directory.
+def _is_excluded(py_file: Path) -> bool:
+    """Check if a file should be excluded from scanning entirely."""
+    path_str = str(py_file)
+    if "/tests/" in path_str or "/test/" in path_str:
+        return True
+    if py_file.name.startswith("test_"):
+        return True
+    if "__pycache__" in path_str:
+        return True
+    if py_file.name == "__init__.py":
+        return True
+    return False
 
-    Excludes:
-    - Test directories (tests/, test/)
-    - Test files (test_*.py)
-    - __pycache__ directories
-    - __init__.py files
 
-    Returns:
-        List of Path objects for production Python files.
-    """
-    if not PYTHON_DIR.exists():
-        return []
-
+def _collect_files(*scan_dirs: Path) -> List[Path]:
+    """Collect non-test Python files from one or more directories."""
     python_files = []
-    for py_file in PYTHON_DIR.rglob("*.py"):
-        path_str = str(py_file)
-        if "/tests/" in path_str or "/test/" in path_str:
+    for scan_dir in scan_dirs:
+        if not scan_dir.exists():
             continue
-        if py_file.name.startswith("test_"):
-            continue
-        if "__pycache__" in path_str:
-            continue
-        if py_file.name == "__init__.py":
-            continue
-        python_files.append(py_file)
+        for py_file in scan_dir.rglob("*.py"):
+            if _is_excluded(py_file):
+                continue
+            python_files.append(py_file)
     return python_files
 
 
@@ -111,10 +115,21 @@ def detect_bare_log_calls(file_path: Path) -> List[Tuple[int, int, str]]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Attribute) and node.func.attr in LOG_METHODS:
-                has_extra = any(kw.arg == "extra" for kw in node.keywords)
-                if not has_extra:
-                    violations.append((node.lineno, node.col_offset, node.func.attr))
+                # Only flag calls on known logger receiver names
+                receiver = node.func.value
+                if isinstance(receiver, ast.Name) and receiver.id in LOGGER_RECEIVER_NAMES:
+                    has_extra = any(kw.arg == "extra" for kw in node.keywords)
+                    if not has_extra:
+                        violations.append((node.lineno, node.col_offset, node.func.attr))
     return violations
+
+
+def _rel_path(file_path: Path) -> Path:
+    """Get relative path from REPO_ROOT, falling back to ATDD_PKG_DIR parent."""
+    try:
+        return file_path.relative_to(REPO_ROOT)
+    except ValueError:
+        return file_path.relative_to(ATDD_PKG_DIR.parent)
 
 
 @pytest.mark.coder
@@ -125,7 +140,9 @@ def test_no_print_in_production_code():
     Production code should use the logging module, not print().
     Print statements are acceptable in:
     - Test files (test_*.py, */tests/*, */test/*)
-    - CLI tools (src/atdd/) — exempt, uses print for user-facing output
+    - ATDD toolkit (src/atdd/) — CLI tool where print() is intentional output
+
+    Scans: REPO_ROOT/python/ only (consumer product code).
 
     Given: Python files in python/ (excluding tests)
     When: Checking for print() calls via AST analysis
@@ -133,7 +150,7 @@ def test_no_print_in_production_code():
 
     Convention: atdd/coder/conventions/logging.convention.yaml (LOG-001)
     """
-    python_files = find_python_files()
+    python_files = _collect_files(PYTHON_DIR)
 
     if not python_files:
         pytest.skip("No Python files found in python/ to validate")
@@ -142,8 +159,8 @@ def test_no_print_in_production_code():
     for py_file in python_files:
         prints = detect_print_calls(py_file)
         for lineno, col in prints:
-            rel_path = py_file.relative_to(REPO_ROOT)
-            violations.append(f"{rel_path}:{lineno}:{col} — print() call")
+            rel = _rel_path(py_file)
+            violations.append(f"{rel}:{lineno}:{col} — print() call")
 
     if violations:
         pytest.fail(
@@ -171,24 +188,26 @@ def test_structured_logging_format():
     Invalid: logger.info("User created")
     Invalid: logger.info("User %s", username)
 
-    Given: Python files in python/ (excluding tests)
+    Scans: REPO_ROOT/python/ and src/atdd/ (consumer code + toolkit dogfooding).
+
+    Given: Python files in python/ and src/atdd/ (excluding tests)
     When: Checking logger calls via AST analysis
     Then: All logger calls include extra= keyword argument
 
     Convention: atdd/coder/conventions/logging.convention.yaml (LOG-002)
     """
-    python_files = find_python_files()
+    python_files = _collect_files(PYTHON_DIR, ATDD_PKG_DIR)
 
     if not python_files:
-        pytest.skip("No Python files found in python/ to validate")
+        pytest.skip("No Python files found to validate")
 
     violations = []
     for py_file in python_files:
         bare_logs = detect_bare_log_calls(py_file)
         for lineno, col, method in bare_logs:
-            rel_path = py_file.relative_to(REPO_ROOT)
+            rel = _rel_path(py_file)
             violations.append(
-                f"{rel_path}:{lineno}:{col} — logger.{method}() without extra="
+                f"{rel}:{lineno}:{col} — logger.{method}() without extra="
             )
 
     if violations:

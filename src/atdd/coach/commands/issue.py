@@ -177,7 +177,7 @@ class IssueManager:
                 project_id=project_config.project_id,
             )
         except GitHubClientError as e:
-            logger.debug("GitHub client not available: %s", e)
+            logger.debug("GitHub client not available: %s", e, extra={"error": str(e)})
             return None
 
     def _render_wmbt_body(
@@ -323,7 +323,7 @@ class IssueManager:
 
         wmbts = []
         if not wagon_dir.exists():
-            logger.debug("No plan dir for wagon %s at %s", wagon, wagon_dir)
+            logger.debug("No plan dir for wagon %s at %s", wagon, wagon_dir, extra={"wagon": wagon})
             return wmbts
 
         # Look for feature YAMLs containing wmbt sections
@@ -1252,7 +1252,7 @@ class IssueManager:
                         return 1
                 except GitHubClientError:
                     # If we can't read fields, allow the transition (fail open)
-                    logger.debug("Could not read Train field, allowing transition")
+                    logger.debug("Could not read Train field, allowing transition", extra={"action": "fail_open"})
 
             # Train cross-reference: validate --train value against _trains.yaml
             # This check applies regardless of --force (identity enforcement)

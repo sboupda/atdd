@@ -496,7 +496,7 @@ class ProjectInitializer:
 
         template_dir = self.package_root / "templates" / "hooks"
         if not template_dir.exists():
-            logger.warning("Hook template directory not found: %s", template_dir)
+            logger.warning("Hook template directory not found: %s", template_dir, extra={"path": str(template_dir)})
             return
 
         installed = 0
@@ -525,7 +525,7 @@ class ProjectInitializer:
             )
             print(f"Set git core.hooksPath → {abs_hooks}")
         except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
-            logger.warning("Could not set core.hooksPath: %s", exc)
+            logger.warning("Could not set core.hooksPath: %s", exc, extra={"path": str(abs_hooks)})
 
     def is_initialized(self) -> bool:
         """Check if ATDD is already initialized in target directory."""
@@ -657,14 +657,14 @@ class ProjectInitializer:
                     print(f"  Migrated label: {old_name} → {new_name}")
                 else:
                     # Old label doesn't exist (already migrated or fresh install) — no-op
-                    logger.debug("Label %s not found for migration: %s", old_name, result.stderr.strip())
+                    logger.debug("Label %s not found for migration: %s", old_name, result.stderr.strip(), extra={"label": old_name})
             except (subprocess.TimeoutExpired, FileNotFoundError):
-                logger.debug("Could not migrate label %s", old_name)
+                logger.debug("Could not migrate label %s", old_name, extra={"label": old_name})
 
     def _create_labels(self, repo: str, schema_path: Path) -> Tuple[int, int]:
         """Create ATDD labels from taxonomy schema. Returns (created, existed)."""
         if not schema_path.exists():
-            logger.warning("Label taxonomy schema not found: %s", schema_path)
+            logger.warning("Label taxonomy schema not found: %s", schema_path, extra={"path": str(schema_path)})
             return 0, 0
 
         with open(schema_path) as f:
