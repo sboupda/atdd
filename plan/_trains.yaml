@@ -10,3 +10,4 @@ trains:
           - implement-code
           - govern-lifecycle
           - self-compliance-migration
+          - security-patterns
