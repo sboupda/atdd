@@ -325,33 +325,40 @@ def test_smoke_tests_have_correct_headers():
 @pytest.mark.tester
 def test_smoke_coverage_gaps():
     """Trains with contract-level journey tests should have smoke tests.
+    Trains defined in plan/_trains.yaml should have e2e directories.
 
     Convention: smoke.convention.yaml > coverage > rule
     Rationale: Contract tests validate schema/sequencing but miss real infra bugs.
     Severity: WARNING — not all trains need smoke tests immediately.
+
+    Two warning categories:
+    1. Plan trains with no e2e directory at all (no journey tests, no smoke tests)
+    2. E2e trains with contract tests but no smoke tests
     """
     analyzer = CoverageAnalyzer(E2E_DIR)
     trains, gaps, _, _ = analyzer.analyze()
+    plan_trains = PlanTrainDiscovery(TRAINS_FILE).discover()
 
-    if not trains:
-        # No e2e tests at all — check if trains are defined in plan/
-        plan_trains = PlanTrainDiscovery(TRAINS_FILE).discover()
-        if not plan_trains:
-            pytest.skip("No trains defined and no e2e/ directory")
-        # Trains exist but no e2e/ — this is a coverage gap, not a skip
+    if not trains and not plan_trains:
+        pytest.skip("No trains defined and no e2e/ directory")
+
+    # Category 1: Plan trains with no e2e coverage at all
+    e2e_train_ids = {t.train_id for t in trains}
+    missing_e2e = [tid for tid in plan_trains if tid not in e2e_train_ids]
+
+    if missing_e2e:
         print(
-            f"\n  WARNING: {len(plan_trains)} train(s) defined in plan/_trains.yaml "
-            f"but no e2e/ directory exists:\n"
-            + "".join(f"    - {tid}\n" for tid in plan_trains)
+            f"\n  WARNING: {len(missing_e2e)} train(s) defined in plan/_trains.yaml "
+            f"have no e2e/ directory:\n"
+            + "".join(f"    - {tid}\n" for tid in missing_e2e)
             + "\n  Every train should have journey tests and smoke tests.\n"
             "  See: src/atdd/tester/conventions/smoke.convention.yaml"
         )
-        return
 
+    # Category 2: E2e trains with contract tests but no smoke tests
     if gaps:
         formatter = ReportFormatter()
         report = formatter.format_coverage(trains, gaps)
-        # Warning only — print but don't fail
         print(report)
         print(
             f"\n  INFO: {len(gaps)} train(s) lack smoke tests. "
