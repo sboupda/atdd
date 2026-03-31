@@ -11,3 +11,4 @@ trains:
           - govern-lifecycle
           - self-compliance-migration
           - security-patterns
+          - enforce-structured-logging
