@@ -53,3 +53,14 @@ wagons:
     outcome: "GREEN tests passing with domain-application-integration-presentation layers"
     path: "plan/implement_code/"
     manifest: "plan/implement_code/_implement_code.yaml"
+
+  - wagon: security-patterns
+    description: "AST-based validator that scans consumer code for known-bad security patterns — SQL injection, missing auth, hardcoded secrets, XSS"
+    theme: commons
+    subject: "coder:security"
+    context: "in-coder-phase, code-review-rules-encodable"
+    action: "scans consumer code via AST and regex for security anti-patterns"
+    goal: "catch security violations that code review catches but are fully automatable"
+    outcome: "zero known-bad security patterns in consumer codebase"
+    path: "plan/security_patterns/"
+    manifest: "plan/security_patterns/_security_patterns.yaml"

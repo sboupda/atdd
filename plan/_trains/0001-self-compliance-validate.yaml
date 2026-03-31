@@ -10,6 +10,7 @@ participants:
   - "wagon:implement-code"
   - "wagon:govern-lifecycle"
   - "wagon:self-compliance-migration"
+  - "wagon:security-patterns"
   - "system:atdd-cli"
 sequence:
   - step: 1
