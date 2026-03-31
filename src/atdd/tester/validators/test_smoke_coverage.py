@@ -17,6 +17,7 @@ Convention: src/atdd/tester/conventions/smoke.convention.yaml
 
 import pytest
 import re
+import yaml
 from pathlib import Path
 from typing import List, Set
 from dataclasses import dataclass, field
@@ -27,6 +28,7 @@ from atdd.coach.utils.repo import find_repo_root
 # Path constants
 REPO_ROOT = find_repo_root()
 E2E_DIR = REPO_ROOT / "e2e"
+TRAINS_FILE = REPO_ROOT / "plan" / "_trains.yaml"
 
 
 # ============================================================================
@@ -116,6 +118,32 @@ class TrainDiscovery:
                 trains.append(coverage)
 
         return trains
+
+
+class PlanTrainDiscovery:
+    """Discover trains defined in plan/_trains.yaml."""
+
+    def __init__(self, trains_file: Path):
+        self.trains_file = trains_file
+
+    def discover(self) -> List[str]:
+        """Return list of train IDs defined in the plan."""
+        if not self.trains_file.exists():
+            return []
+        try:
+            with open(self.trains_file) as f:
+                data = yaml.safe_load(f) or {}
+        except (yaml.YAMLError, OSError):
+            return []
+
+        train_ids = []
+        for _theme_key, theme in (data.get("trains") or {}).items():
+            for _journey_key, trains in (theme or {}).items():
+                for train in (trains if isinstance(trains, list) else []):
+                    tid = train.get("train_id")
+                    if tid:
+                        train_ids.append(tid)
+        return train_ids
 
 
 # Forbidden mock import patterns per smoke.convention.yaml
@@ -306,7 +334,19 @@ def test_smoke_coverage_gaps():
     trains, gaps, _, _ = analyzer.analyze()
 
     if not trains:
-        pytest.skip("No e2e/ directory or no train tests found")
+        # No e2e tests at all — check if trains are defined in plan/
+        plan_trains = PlanTrainDiscovery(TRAINS_FILE).discover()
+        if not plan_trains:
+            pytest.skip("No trains defined and no e2e/ directory")
+        # Trains exist but no e2e/ — this is a coverage gap, not a skip
+        print(
+            f"\n  WARNING: {len(plan_trains)} train(s) defined in plan/_trains.yaml "
+            f"but no e2e/ directory exists:\n"
+            + "".join(f"    - {tid}\n" for tid in plan_trains)
+            + "\n  Every train should have journey tests and smoke tests.\n"
+            "  See: src/atdd/tester/conventions/smoke.convention.yaml"
+        )
+        return
 
     if gaps:
         formatter = ReportFormatter()
