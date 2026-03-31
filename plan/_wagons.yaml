@@ -64,3 +64,14 @@ wagons:
     outcome: "zero known-bad security patterns in consumer codebase"
     path: "plan/security_patterns/"
     manifest: "plan/security_patterns/_security_patterns.yaml"
+
+  - wagon: enforce-structured-logging
+    description: "Enforce structured logging and prohibit print() in non-CLI production Python code"
+    theme: commons
+    subject: "agent:coder"
+    context: "in-green-phase, logging-conventions-undefined"
+    action: "validates logging patterns via AST analysis in coder phase"
+    goal: "ensure all production Python code uses structured logging with context"
+    outcome: "coder validator that detects unstructured log calls and print() in production code"
+    path: "plan/enforce_structured_logging/"
+    manifest: "plan/enforce_structured_logging/_enforce_structured_logging.yaml"

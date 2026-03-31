@@ -1,0 +1,70 @@
+schema_version: "1.0.0"
+convention_id: "coder.logging"
+name: "Structured Logging Convention"
+description: |
+  Defines logging rules for production Python code.
+  Phase 1: Two enforceable rules via AST analysis.
+  Phase 2 (deferred): Required field enforcement, log-level appropriateness.
+
+rationale: |
+  Production Python code must use structured logging for observability.
+  The stdlib logging module with extra={} provides structured context.
+  CLI tools (src/atdd/) are exempt because print() is their primary output mechanism.
+
+scan_scope:
+  LOG-001:
+    include:
+      - "python/"
+    note: "print() check applies to consumer product code only. ATDD toolkit (src/atdd/) is a CLI tool where print() is the intentional output mechanism."
+  LOG-002:
+    include:
+      - "python/"
+      - "src/atdd/"
+    note: "Structured logging check applies to both consumer code and the ATDD toolkit itself (dogfooding)."
+  exclude:
+    - "*/tests/"
+    - "*/test/"
+    - "__pycache__/"
+    - "__init__.py"
+    - "test_*.py"
+
+rules:
+  - id: "LOG-001"
+    name: "no-print-in-production"
+    description: "No print() calls in non-test production Python code"
+    severity: "error"
+    detection: "AST — ast.Call where func.id == 'print'"
+    rationale: "Production code should use logging, not print()"
+    exemptions:
+      - "CLI tools (src/atdd/) — print is intentional user-facing output"
+      - "Test files — print is acceptable for debug output"
+
+  - id: "LOG-002"
+    name: "structured-logging-required"
+    description: "Logger calls must include extra= keyword argument with context dict"
+    severity: "error"
+    detection: "AST — ast.Call where func.attr in {info,debug,warning,error,critical,exception,log} and no extra= kwarg"
+    rationale: "Bare string logs are unstructured and not machine-parseable"
+    valid_examples:
+      - 'logger.info("User created", extra={"user_id": uid, "action": "create"})'
+      - 'logger.error("Failed to connect", extra={"host": host, "retry": count})'
+    invalid_examples:
+      - 'logger.info("User created")'
+      - 'logger.info("User %s created", username)'
+      - 'logger.debug("Processing request")'
+
+enforcement:
+  validator: "src/atdd/coder/validators/test_structured_logging.py"
+  specs:
+    - id: "SPEC-CODER-LOG-0001"
+      description: "No print() in non-test production Python code"
+      validates: "LOG-001"
+    - id: "SPEC-CODER-LOG-0002"
+      description: "Logger calls include extra= context"
+      validates: "LOG-002"
+
+deferred:
+  phase_2:
+    - "Required context fields (wagon, phase, urn) enforcement"
+    - "Log-level appropriateness analysis"
+    - "Exclusion list configuration via .atdd/config.yaml"

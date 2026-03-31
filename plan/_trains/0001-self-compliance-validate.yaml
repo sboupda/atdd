@@ -11,6 +11,7 @@ participants:
   - "wagon:govern-lifecycle"
   - "wagon:self-compliance-migration"
   - "wagon:security-patterns"
+  - "wagon:enforce-structured-logging"
   - "system:atdd-cli"
 sequence:
   - step: 1
@@ -29,6 +30,11 @@ sequence:
     to: "wagon:self-compliance-migration"
     artifact: "commons:code:implementation"
   - step: 4
+    intent: "Enforce structured logging conventions via AST-based coder validator"
+    from: "wagon:implement-code"
+    to: "wagon:enforce-structured-logging"
+    artifact: "commons:compliance:logging"
+  - step: 5
     intent: "Validate compliance across all phases and produce audit report"
     from: "wagon:govern-lifecycle"
     to: "system:atdd-cli"

@@ -88,7 +88,7 @@ class GitHubClient:
     def _run_gh(self, args: List[str], input_text: Optional[str] = None) -> str:
         """Run a `gh` command and return stdout."""
         cmd = ["gh"] + args
-        logger.debug("gh %s", " ".join(args))
+        logger.debug("gh %s", " ".join(args), extra={"command": args[0] if args else "gh"})
         result = subprocess.run(
             cmd, capture_output=True, text=True, timeout=30,
             input=input_text,
@@ -138,7 +138,7 @@ class GitHubClient:
         output = self._run_gh(args)
         # Output is the issue URL, extract number
         issue_number = int(output.rstrip("/").split("/")[-1])
-        logger.info("Created issue #%d: %s", issue_number, title)
+        logger.info("Created issue #%d: %s", issue_number, title, extra={"issue": issue_number})
         return issue_number
 
     def get_issue_node_id(self, issue_number: int) -> str:
@@ -186,7 +186,7 @@ class GitHubClient:
             f'issueId: "{parent_id}", subIssueId: "{child_id}" '
             f'}}) {{ issue {{ id }} subIssue {{ id }} }} }}'
         )
-        logger.info("Linked #%d as sub-issue of #%d", child_number, parent_number)
+        logger.info("Linked #%d as sub-issue of #%d", child_number, parent_number, extra={"child": child_number, "parent": parent_number})
 
     def get_all_sub_issues(
         self, label: str, state: str = "OPEN",
@@ -249,6 +249,7 @@ class GitHubClient:
 
         logger.debug(
             "Fetched sub-issues for %d %s issues in batch", len(result), state_upper,
+            extra={"count": len(result), "state": state_upper},
         )
         return result
 
@@ -282,7 +283,7 @@ class GitHubClient:
             f'}}) {{ item {{ id }} }} }}'
         )
         item_id = data["data"]["addProjectV2ItemById"]["item"]["id"]
-        logger.info("Added #%d to project (item: %s)", issue_number, item_id)
+        logger.info("Added #%d to project (item: %s)", issue_number, item_id, extra={"issue": issue_number, "item_id": item_id})
         return item_id
 
     def set_project_field_text(
@@ -326,7 +327,7 @@ class GitHubClient:
             f'}}) {{ projectV2Field {{ ... on ProjectV2Field {{ id name }} '
             f'... on ProjectV2SingleSelectField {{ id name }} }} }} }}'
         )
-        logger.info("Renamed field %s → %s", field_id, new_name)
+        logger.info("Renamed field %s → %s", field_id, new_name, extra={"field_id": field_id, "new_name": new_name})
 
     def delete_project_field(self, field_id: str) -> None:
         """Delete a Project v2 field."""
@@ -336,7 +337,7 @@ class GitHubClient:
             f'}}) {{ projectV2Field {{ ... on ProjectV2Field {{ id }} '
             f'... on ProjectV2SingleSelectField {{ id }} }} }} }}'
         )
-        logger.info("Deleted field %s", field_id)
+        logger.info("Deleted field %s", field_id, extra={"field_id": field_id})
 
     def get_project_fields(self) -> Dict[str, Any]:
         """Fetch all project fields with their IDs and option IDs."""
@@ -479,7 +480,7 @@ class GitHubClient:
             else:
                 break
 
-        logger.debug("Fetched %d project items in batch", len(items))
+        logger.debug("Fetched %d project items in batch", len(items), extra={"count": len(items)})
         return items
 
     # -------------------------------------------------------------------------
