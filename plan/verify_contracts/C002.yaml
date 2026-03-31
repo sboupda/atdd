@@ -1,14 +1,14 @@
-urn: "wmbt:verify-contracts:K001"
+urn: "wmbt:verify-contracts:C002"
 step: "confirm"
 direction: "minimize"
 dimension: "quantity"
 object_of_control: "false-positive-error-response-violations"
 context_clarifier: "when the validator runs on the ATDD toolkit itself"
-lens: "functional.correctness"
+lens: "functional.effectiveness"
 statement: "minimize quantity of false-positive-error-response-violations when the validator runs on the ATDD toolkit itself"
 acceptances:
   - identity:
-      urn: "acc:verify-contracts:K001-UNIT-001-self-validates"
+      urn: "acc:verify-contracts:C002-UNIT-001-self-validates"
       id: "AC-UNIT-001"
       purpose: "Error response validator produces no false positives on the toolkit"
       phase: "GREEN"

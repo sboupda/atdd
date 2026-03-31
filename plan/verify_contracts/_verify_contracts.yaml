@@ -19,7 +19,7 @@ produce:
     telemetry: null
     to: external
   - name: commons:error:response
-    contract: "contracts/commons/error/response.schema.json"
+    contract: "contract:commons:error:response"
     telemetry: null
     to: external
 
@@ -32,4 +32,4 @@ wmbt:
   C001: "Confirm error response contract schema validates canonical error payloads"
   D001: "Define error-response convention with enum-based error codes and phase guidance"
   E001: "Write compliance validator enforcing structured error responses in Python endpoints"
-  K001: "Validator passes on the toolkit itself with no false positives"
+  C002: "Validator passes on the toolkit itself with no false positives"

@@ -9,7 +9,7 @@ wmbts:
   - "wmbt:verify-contracts:C001"
   - "wmbt:verify-contracts:D001"
   - "wmbt:verify-contracts:E001"
-  - "wmbt:verify-contracts:K001"
+  - "wmbt:verify-contracts:C002"
 components:
   backend:
     presentation:

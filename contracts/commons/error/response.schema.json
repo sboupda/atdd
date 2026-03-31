@@ -18,15 +18,30 @@
     "api": {
       "operations": [
         {
-          "method": "ANY",
+          "method": "GET",
           "path": "/*",
-          "description": "Error response shape for any failing endpoint",
+          "description": "Error response shape for failing GET endpoints",
           "responses": {
-            "4xx": {
+            "400": {
               "description": "Client error",
               "schema": "$ref: #"
             },
-            "5xx": {
+            "500": {
+              "description": "Server error",
+              "schema": "$ref: #"
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/*",
+          "description": "Error response shape for failing POST endpoints",
+          "responses": {
+            "400": {
+              "description": "Client error",
+              "schema": "$ref: #"
+            },
+            "500": {
               "description": "Server error",
               "schema": "$ref: #"
             }

@@ -4,7 +4,7 @@ direction: "minimize"
 dimension: "quantity"
 object_of_control: "bare-string-error-responses"
 context_clarifier: "when HTTP endpoints must return structured error payloads matching the contract"
-lens: "functional.correctness"
+lens: "functional.effectiveness"
 statement: "minimize quantity of bare-string-error-responses when HTTP endpoints must return structured error payloads matching the contract"
 acceptances:
   - identity:

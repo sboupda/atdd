@@ -4,7 +4,7 @@ direction: "maximize"
 dimension: "likelihood"
 object_of_control: "error-response-contract-validity"
 context_clarifier: "when error payloads must conform to a schema before enforcement can begin"
-lens: "functional.correctness"
+lens: "functional.effectiveness"
 statement: "maximize likelihood of error-response-contract-validity when error payloads must conform to a schema before enforcement can begin"
 acceptances:
   - identity:
