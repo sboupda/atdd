@@ -10,9 +10,16 @@ action: "generates failing tests and contract schemas from acceptance criteria"
 goal: "lock expected behavior before implementation begins"
 outcome: "RED tests, JSON Schema contracts, and telemetry signal definitions"
 
+features:
+  - urn: "feature:verify-contracts:error-response-contract"
+
 produce:
   - name: commons:contract:schema
     contract: null
+    telemetry: null
+    to: external
+  - name: commons:error:response
+    contract: "contract:commons:error:response"
     telemetry: null
     to: external
 
@@ -21,4 +28,8 @@ consume:
     from: wagon:define-plans
 
 wmbt:
-  total: 0
+  total: 4
+  C001: "Confirm error response contract schema validates canonical error payloads"
+  D001: "Define error-response convention with enum-based error codes and phase guidance"
+  E001: "Write compliance validator enforcing structured error responses in Python endpoints"
+  C002: "Validator passes on the toolkit itself with no false positives"

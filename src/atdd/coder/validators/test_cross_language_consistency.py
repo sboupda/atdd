@@ -201,6 +201,14 @@ def find_contract_entities() -> Dict[str, Set[str]]:
         except Exception:
             continue
 
+        # Skip cross-cutting shape contracts (e.g., error response)
+        # that define wire formats rather than domain entities.
+        # These use wildcard paths (/*) since they apply to all endpoints.
+        metadata = schema.get('x-artifact-metadata', {})
+        operations = metadata.get('api', {}).get('operations', [])
+        if any(op.get('path', '').startswith('/*') for op in operations):
+            continue
+
         # Extract entity name from $id
         schema_id = schema.get('$id', '')
         if ':' in schema_id:
