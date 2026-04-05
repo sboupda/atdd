@@ -257,7 +257,8 @@ class AgentConfigSync:
 
         Detects upgrade by comparing installed version vs toolkit.last_version
         in .atdd/config.yaml. If upgraded, applies branch protection rules
-        so consumer repos inherit the latest GitHub infrastructure.
+        so consumer repos inherit the latest GitHub infrastructure, then
+        verifies the result to surface drift or degraded mode.
         """
         from atdd import __version__
         from atdd.version_check import _is_newer, _get_last_toolkit_version
@@ -276,9 +277,24 @@ class AgentConfigSync:
             return
 
         print("\nApplying GitHub infrastructure updates...")
-        from atdd.coach.commands.initializer import ProjectInitializer
-        initializer = ProjectInitializer(self.target_dir)
-        initializer._set_branch_protection(repo)
+        from atdd.coach.commands.branch_protection import (
+            apply_and_verify,
+            ProtectionStatus,
+        )
+
+        status, details = apply_and_verify(repo)
+        if status == ProtectionStatus.DRIFTED:
+            print("  Branch protection: DRIFTED (policy mismatch after apply)")
+            for d in details:
+                print(f"    - {d}")
+        elif status == ProtectionStatus.MISSING:
+            print("  Branch protection: MISSING (not set on main)")
+        elif status == ProtectionStatus.DEGRADED:
+            print("  Branch protection: DEGRADED (cannot verify)")
+            for d in details:
+                print(f"    - {d}")
+        elif status == ProtectionStatus.ENFORCED:
+            print("  Branch protection: verified")
 
     # --- Private helpers ---
 

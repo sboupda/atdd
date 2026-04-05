@@ -1229,49 +1229,14 @@ jobs:
     def _set_branch_protection(self, repo: str) -> bool:
         """Configure branch protection on main.
 
-        Uses GitHub REST API to set branch protection rules:
-        - Require branches to be up to date before merging
-        - Require parallel validate phase checks to pass (atdd-validate workflow)
-        - Require PR reviews (no direct push to main)
-        - Enforce for admins (no bypasses)
+        Delegates to the shared branch_protection contract module which
+        holds the single source of truth for the expected policy.
 
         Returns True if protection was set successfully.
         """
-        try:
-            protection = json.dumps({
-                "required_status_checks": {
-                    "strict": True,
-                    "contexts": [
-                        "validate-gate",
-                    ],
-                },
-                "enforce_admins": True,
-                "required_pull_request_reviews": {
-                    "required_approving_review_count": 0,
-                },
-                "restrictions": None,
-            })
-            result = subprocess.run(
-                ["gh", "api",
-                 f"repos/{repo}/branches/main/protection",
-                 "--method", "PUT",
-                 "--input", "-"],
-                input=protection,
-                capture_output=True, text=True, timeout=15,
-            )
-            if result.returncode == 0:
-                print("  Branch protection: main (require validate check, require PR, enforce admins)")
-                return True
-            else:
-                stderr = result.stderr.strip()
-                if "Not Found" in stderr or "403" in stderr:
-                    print("  Branch protection: SKIPPED (requires admin access or GitHub Pro)")
-                else:
-                    print(f"  Branch protection: FAILED ({stderr[:80]})")
-                return False
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            print("  Branch protection: SKIPPED (timeout or gh not available)")
-            return False
+        from atdd.coach.commands.branch_protection import apply_branch_protection
+
+        return apply_branch_protection(repo)
 
     def _update_config_github(
         self, repo: str, project_id: str, project_number: int

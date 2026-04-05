@@ -238,11 +238,11 @@ class TestStatusCommand:
 
         Given: ATDD status command
         When: Running `atdd status`
-        Then: Total line shows 81 files (current validator count)
+        Then: Total line shows 82 files (current validator count)
         """
         result = run_atdd("status")
-        assert "81 files" in result.stdout, (
-            f"status total should show '81 files', got: {result.stdout}"
+        assert "82 files" in result.stdout, (
+            f"status total should show '82 files', got: {result.stdout}"
         )
 
 
