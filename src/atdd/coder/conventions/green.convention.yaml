@@ -282,8 +282,16 @@ green_phase:
       file: "boundaries.convention.yaml"
       sections:
         - "interaction.composition_roots: Full patterns and wagon isolation rules"
+        - "interaction.composition_roots.composition_completeness: Intra-feature wiring rules"
         - "namespacing: Package structure and import patterns for tests/implementation"
       note: "See boundaries.convention.yaml for complete wagon isolation architecture"
+
+    composition_completeness:
+      convention: "composition.convention.yaml"
+      rules:
+        - "Validate edges between layers that exist"
+        - "Use deterministic fixtures for barrel imports, setter injection, and partial features"
+      note: "Completeness checks extend dependency rules; they do not replace them."
 
     purpose: |
       Composition roots serve as dependency injection containers and entry points.

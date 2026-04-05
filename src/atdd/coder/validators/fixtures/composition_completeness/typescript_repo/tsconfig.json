@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@reveal-status/*": ["web/src/reveal-status/*"]
+    }
+  }
+}

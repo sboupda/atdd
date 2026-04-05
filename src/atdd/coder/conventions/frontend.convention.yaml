@@ -501,6 +501,14 @@ frontend:
         exception:
           description: "maintain-ux uses flat design-system layout; traceability via URN headers"
 
+      composition_completeness:
+        convention: "composition.convention.yaml"
+        value_imports_only: true
+        barrel_reexports_are_edges: true
+        composition_roots:
+          - "presentation/*Page.tsx"
+          - "presentation/*Container.tsx"
+
   dependency:
     # Frontend-specific dependency rules (different from backend)
     # Rationale: Frontend hooks naturally orchestrate both domain logic and integration

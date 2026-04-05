@@ -246,6 +246,14 @@ interaction:
       Composition roots (composition.py, wagon.py, trains/runner.py, app.py) are entrypoints
       that wire dependencies. They are executed, never imported by other code.
 
+    composition_completeness:
+      convention: "composition.convention.yaml"
+      scope: "Intra-feature completeness only"
+      rules:
+        - "existing_layers_only filters candidate consumer sets at validation time"
+        - "composition.py and wagon.py may satisfy downstream consumption for Python layers"
+        - "Cross-wagon SharedDependencies are excluded from this validator"
+
     feature_composition:
       file: "python/{wagon}/{feature}/composition.py"
       purpose: "Wire dependencies for a single feature"
