@@ -42,9 +42,15 @@ PYPI_URL = "https://pypi.org/pypi/atdd/json"
 
 
 def _parse_version(version: str) -> Tuple[int, ...]:
-    """Parse version string into tuple for comparison."""
+    """Parse version string into tuple for comparison.
+
+    Strips PEP 440 local version identifiers (e.g. '1.53.0+diool.2' -> '1.53.0')
+    so downstream forks can tag their own releases without triggering upgrade
+    prompts.
+    """
     try:
-        return tuple(int(x) for x in version.split(".")[:3])
+        base = version.split("+", 1)[0]
+        return tuple(int(x) for x in base.split(".")[:3])
     except (ValueError, AttributeError):
         return (0, 0, 0)
 
