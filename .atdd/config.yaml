@@ -19,7 +19,7 @@ test_runner:
 toolkit:
   last_version: 1.53.0
 github:
-  repo: afokapu/atdd
+  repo: sboupda/atdd
   project_number: 1
   project_id: PVT_kwHOAIbyOM4BPpKf
   field_schema: atdd/coach/schemas/project_fields.schema.json
