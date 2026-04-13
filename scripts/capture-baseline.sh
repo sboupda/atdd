@@ -56,7 +56,9 @@ fi
   echo ""
   echo "=== atdd status ==="
   atdd status 2>&1 || echo "(failed)"
-} > "$OUT"
+} | sed 's/[[:space:]]*$//' > "$OUT"
+# strip trailing whitespace so captured pytest output doesn't trip
+# hooks or diff tooling later
 
 if [[ "$OUT" != "/dev/stdout" ]]; then
   echo "baseline written: $OUT"
