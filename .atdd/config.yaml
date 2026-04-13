@@ -17,11 +17,11 @@ test_runner:
   check: bash scripts/check.sh
   env: null
 toolkit:
-  last_version: 1.53.0
+  last_version: 1.53.0+diool.2
 github:
   repo: sboupda/atdd
-  project_number: 1
-  project_id: PVT_kwHOAIbyOM4BPpKf
+  project_number: 2
+  project_id: PVT_kwHOAQFoOc4BUih0
   field_schema: atdd/coach/schemas/project_fields.schema.json
 workspace:
   color: '#1976D2'
