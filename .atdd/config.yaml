@@ -10,18 +10,14 @@ init:
 coverage:
   exceptions:
     features_without_implementation:
-<<<<<<< HEAD
     - feature:self-compliance-migration:bootstrap-compliance
-=======
-      - "feature:self-compliance-migration:bootstrap-compliance"
 test_runner:
-  single: "conda run -n quant pytest -v {test_files} --no-header"
-  suite: "conda run -n quant pytest -q"
-  check: "bash scripts/check.sh"
-  env: null  # set to "conda run -n quant" if needed as prefix for other commands
->>>>>>> d2ed11d (chore: diool customizations — test_runner config, CTO brief, implementation plan, skills package)
+  single: conda run -n quant pytest -v {test_files} --no-header
+  suite: conda run -n quant pytest -q
+  check: bash scripts/check.sh
+  env: null
 toolkit:
-  last_version: 1.49.0
+  last_version: 1.53.0
 github:
   repo: afokapu/atdd
   project_number: 1
