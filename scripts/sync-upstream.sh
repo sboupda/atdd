@@ -91,6 +91,27 @@ else
   echo "note: no 'diool' branch found — skipping rebase"
 fi
 
+# --- post-sync: restore repo-versioned hooksPath ---
+# atdd init (triggered by some upstream flows) flips core.hooksPath to
+# .atdd/hooks, silently disabling our repo-versioned safety net. Restore
+# and assert before we declare sync complete.
+EXPECTED_HOOKS_PATH=".git-hooks"
+if [[ -d "$EXPECTED_HOOKS_PATH" ]]; then
+  CURRENT_HOOKS_PATH="$(git config --get core.hooksPath || echo "")"
+  if [[ "$CURRENT_HOOKS_PATH" != "$EXPECTED_HOOKS_PATH" ]]; then
+    echo "==> restoring core.hooksPath: $CURRENT_HOOKS_PATH → $EXPECTED_HOOKS_PATH"
+    git config core.hooksPath "$EXPECTED_HOOKS_PATH"
+  fi
+  # Hard assertion — fail loudly if the restore didn't stick.
+  if [[ "$(git config --get core.hooksPath)" != "$EXPECTED_HOOKS_PATH" ]]; then
+    echo "error: core.hooksPath is not $EXPECTED_HOOKS_PATH after restore attempt" >&2
+    exit 1
+  fi
+  echo "==> hooksPath verified: $EXPECTED_HOOKS_PATH"
+else
+  echo "warning: $EXPECTED_HOOKS_PATH/ missing — skipping hooksPath restore" >&2
+fi
+
 # --- done ---
 echo ""
 echo "==> sync complete"

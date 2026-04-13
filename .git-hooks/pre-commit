@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# .git-hooks/pre-commit — repo-versioned pre-commit hook for sboupda/atdd.
+#
+# Design: chains upstream's .atdd/hooks/pre-commit first (manifest gate,
+# main-branch block, staged-file warning), then runs Diool's own safety
+# net (conflict markers, YAML validation).
+#
+# Why this exists: `atdd init --force` silently flips core.hooksPath back
+# to .atdd/hooks, disabling our repo-versioned safety net. Chaining makes
+# our hook the superset, so setting core.hooksPath=.git-hooks after init
+# preserves both upstream behaviour AND our extras.
+#
+# Install / restore: scripts/install-hooks.sh
+
+set -eu
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+UPSTREAM_HOOK="$REPO_ROOT/.atdd/hooks/pre-commit"
+
+# --- 1. Chain upstream hook (authoritative source for manifest/main gates) ---
+if [ -x "$UPSTREAM_HOOK" ]; then
+    # Run upstream hook in a subshell so its `set -e` doesn't nuke us.
+    if ! "$UPSTREAM_HOOK"; then
+        echo ""
+        echo "pre-commit: upstream hook (.atdd/hooks/pre-commit) failed — aborting." >&2
+        exit 1
+    fi
+fi
+
+# --- 2. Diool safety net: block unresolved conflict markers in staged diff ---
+# Pattern matches the start-of-added-line markers from `git diff --cached`.
+# Restricted to the three canonical markers to avoid matching code constants.
+CONFLICT_PATTERN='^\+(<{7}|={7}|>{7})( |$)'
+
+if git diff --cached --no-color | grep -E "$CONFLICT_PATTERN" >/dev/null 2>&1; then
+    echo "" >&2
+    echo "pre-commit: unresolved conflict markers in staged changes:" >&2
+    git diff --cached --no-color | grep -nE "$CONFLICT_PATTERN" | head -20 >&2
+    echo "" >&2
+    echo "Resolve the conflict, then re-stage and commit." >&2
+    exit 1
+fi
+
+# --- 3. Validate .atdd/config.yaml if it's being committed ---
+if git diff --cached --name-only | grep -q '^\.atdd/config\.yaml$'; then
+    CONFIG="$REPO_ROOT/.atdd/config.yaml"
+    if ! python3 -c "import yaml,sys; yaml.safe_load(open('$CONFIG'))" 2>/dev/null; then
+        echo "" >&2
+        echo "pre-commit: .atdd/config.yaml is not valid YAML:" >&2
+        python3 -c "import yaml; yaml.safe_load(open('$CONFIG'))" 2>&1 | head -10 >&2
+        exit 1
+    fi
+fi
+
+# --- 4. Soft warn on trailing whitespace (advisory only) ---
+if git diff --cached --check >/dev/null 2>&1; then
+    :
+else
+    # Don't block — just surface the warning.
+    echo "pre-commit: (advisory) whitespace issues in staged changes:" >&2
+    git diff --cached --check >&2 || true
+fi
+
+exit 0

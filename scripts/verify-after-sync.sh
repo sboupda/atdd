@@ -125,6 +125,36 @@ else
 fi
 
 echo ""
+echo "=== 4b. config.yaml sanity (github.repo matches origin) ==="
+if command -v python3 >/dev/null 2>&1 && command -v gh >/dev/null 2>&1; then
+  CFG_REPO=$(python3 -c "import yaml; c=yaml.safe_load(open('.atdd/config.yaml')); print((c.get('github') or {}).get('repo',''))" 2>/dev/null || echo "")
+  GH_REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null || echo "")
+  if [[ -z "$CFG_REPO" ]]; then
+    warn "github.repo missing from .atdd/config.yaml"
+  elif [[ -z "$GH_REPO" ]]; then
+    warn "gh repo view returned nothing (run: gh repo set-default)"
+  elif [[ "$CFG_REPO" == "$GH_REPO" ]]; then
+    pass "github.repo ($CFG_REPO) matches gh default ($GH_REPO)"
+  else
+    fail "github.repo ($CFG_REPO) != gh default ($GH_REPO) — atdd init will target the wrong repo"
+  fi
+else
+  info "python3 or gh not available — skipped config/origin sanity"
+fi
+
+echo ""
+echo "=== 4c. core.hooksPath points at repo-versioned hooks ==="
+EXPECTED_HOOKS_PATH=".git-hooks"
+CURRENT_HOOKS_PATH="$(git config --get core.hooksPath || echo "")"
+if [[ ! -d "$EXPECTED_HOOKS_PATH" ]]; then
+  info "$EXPECTED_HOOKS_PATH/ not present — skipped hooksPath assertion"
+elif [[ "$CURRENT_HOOKS_PATH" == "$EXPECTED_HOOKS_PATH" ]]; then
+  pass "core.hooksPath = $EXPECTED_HOOKS_PATH"
+else
+  fail "core.hooksPath is '$CURRENT_HOOKS_PATH', expected '$EXPECTED_HOOKS_PATH' — run 'git config core.hooksPath $EXPECTED_HOOKS_PATH'"
+fi
+
+echo ""
 echo "=== 5. CLI command surface (skills reference these) ==="
 if command -v atdd >/dev/null 2>&1; then
   for cmd in "validate" "gate" "issue" "inventory" "status"; do
