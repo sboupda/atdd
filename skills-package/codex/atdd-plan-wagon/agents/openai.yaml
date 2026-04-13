@@ -1,0 +1,4 @@
+interface:
+  display_name: "ATDD Plan Wagon"
+  short_description: "Extract WMBT from PRD, produce wagon + train artifacts"
+  default_prompt: "Use $atdd-plan-wagon to read a PRD and produce ATDD wagon definitions with acceptance criteria."

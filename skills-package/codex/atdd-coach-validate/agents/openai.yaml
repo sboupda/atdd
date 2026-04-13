@@ -1,0 +1,4 @@
+interface:
+  display_name: "ATDD Coach Validate"
+  short_description: "Cross-wagon validation and phase gate enforcement"
+  default_prompt: "Use $atdd-coach-validate to check cross-wagon contracts, event taxonomy, and architecture compliance before allowing a phase transition."
