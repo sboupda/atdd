@@ -513,6 +513,35 @@ git:
     format: "conventional commits (feat:, fix:, docs:, refactor:, test:)"
     atomic: "One commit per phase transition when meaningful"
 
+  # ─── MICRO-COMMIT DISCIPLINE (MANDATORY FOR ALL AGENTS) ───────────────
+  # Agents MUST commit frequently to avoid losing work.
+  # Large uncommitted deltas are the #1 cause of lost agent work
+  # (incident: 64 files edited on main, all lost when pre-commit hook blocked).
+  #
+  # Rules:
+  #   1. Commit after EVERY completed sub-task (file created, test written, bug fixed).
+  #   2. Never accumulate more than 5 modified files without committing.
+  #   3. If you realize you are on main: STOP editing immediately.
+  #      Recovery: git stash → atdd branch <N> → cd worktree → git stash pop
+  #   4. Prefer many small commits over one large commit — they are easier to
+  #      review, revert, and bisect.
+  #   5. A commit message can be short ("add CameoRepository") — frequency
+  #      matters more than message polish during active development.
+  #
+  # Anti-patterns (NEVER do these):
+  #   - Edit 10+ files then commit once at the end
+  #   - Defer commits until "everything works"
+  #   - Batch unrelated changes in one commit
+  # ───────────────────────────────────────────────────────────────────────
+  commit_discipline:
+    rule: "Commit after every completed sub-task. Never accumulate >5 modified files."
+    frequency: "After each file creation, test addition, or bug fix"
+    on_main_detection: "STOP immediately. git stash → atdd branch <N> → cd worktree → git stash pop"
+    anti_patterns:
+      - "Editing 10+ files before committing"
+      - "Deferring commits until everything works"
+      - "Batching unrelated changes in one commit"
+
   branching:
     rule: "Every new branch MUST be created as a git worktree (flat sibling of main)"
     layout: |
@@ -530,6 +559,20 @@ git:
     prefixes: ["feat/", "fix/", "refactor/", "chore/", "docs/", "devops/"]
     example: "git worktree add ../feat-traceability-gates -b feat/traceability-gates"
 
+  # ─── PARALLEL WORK VIA WORKTREE + CMUX ────────────────────────────────
+  # Machine-readable rules for parallel agent sessions (waves, babysitter,
+  # prompt approval policy, violation patterns, merge cascade, telemetry)
+  # live in the orchestration convention file. A human-facing overview of
+  # when/why to parallelize is retained under git.branching above.
+  # ───────────────────────────────────────────────────────────────────────
+  parallelization:
+    see: "src/atdd/coach/conventions/orchestration.convention.yaml"
+    cli:
+      - "atdd orchestrate <issue-numbers...>"
+      - "atdd babysit [--interval 60]"
+      - "atdd merge-cascade <pr-numbers...>"
+      - "atdd session-template <issue-number>"
+
   workflow:
     branch_strategy: "worktree per branch from main"
     phase_commits:
@@ -537,6 +580,15 @@ git:
       - "RED: commit failing tests"
       - "GREEN: commit passing implementation"
       - "REFACTOR: commit clean architecture"
+
+  micro_commit_hooks:
+    purpose: "Advisory warnings to encourage smaller commits (all exit 0, never block)"
+    pre_push: "Warns when >10 uncommitted/untracked files (override: ATDD_MAX_UNCOMMITTED)"
+    pre_commit: "Warns when >20 staged files (override: ATDD_MAX_STAGED)"
+    claude_code:
+      template: "src/atdd/coach/templates/hooks/claude-pre-tool-use.sh"
+      install: "cp src/atdd/coach/templates/hooks/claude-pre-tool-use.sh .claude/hooks/pre_tool_use.sh"
+      behavior: "Reminds agent to commit when >5 files modified since last commit"
 
 # Release Gate (MANDATORY - session completion)
 # Every session MUST end with version bump + tag
