@@ -5,13 +5,15 @@
 # Usage:
 #   scripts/verify-after-sync.sh
 #
-# Checks:
-#   1. atdd CLI is installed and reports a version
-#   2. `atdd gate` passes (core framework self-check)
-#   3. `atdd validate` passes on the current repo
-#   4. All convention files referenced by skills-package/ still exist upstream
-#   5. .atdd/config.yaml is valid YAML
-#   6. Report any skills-package/ references to renamed/removed convention files
+# Behavior:
+#   - Hard-fails immediately on YAML errors or unresolved conflict markers
+#     (these mask all downstream checks, so fix them first).
+#   - Continues through soft checks (CLI, conventions) reporting pass/fail/warn.
+#
+# Exit codes:
+#   0  all checks passed
+#   1  soft-check failures
+#   2  hard-fail: config invalid or conflict markers present
 
 set -uo pipefail
 
@@ -26,7 +28,42 @@ pass()  { echo "  [PASS] $1";   PASS=$((PASS+1)); }
 fail()  { echo "  [FAIL] $1";   FAIL=$((FAIL+1)); }
 warn()  { echo "  [WARN] $1";   WARN=$((WARN+1)); }
 info()  { echo "  [INFO] $1"; }
+die()   { echo "  [HARD-FAIL] $1" >&2; exit 2; }
 
+# ============================================================================
+# HARD CHECKS — bail immediately, nothing else matters until these pass
+# ============================================================================
+
+echo "=== 0a. conflict markers (repo-wide) ==="
+# Look for unresolved merge conflict markers in tracked files.
+# Using git grep so we respect .gitignore and skip binary/vendored content.
+if git grep -nE '^(<{7}|={7}|>{7})( |$)' -- ':!scripts/verify-after-sync.sh' ':!.git-hooks/' 2>/dev/null; then
+  die "unresolved conflict markers found above. resolve them before continuing."
+else
+  pass "no conflict markers in tracked files"
+fi
+
+echo ""
+echo "=== 0b. .atdd/config.yaml validity (hard) ==="
+if [[ ! -f .atdd/config.yaml ]]; then
+  die ".atdd/config.yaml is missing"
+fi
+if ! python3 -c "import yaml, sys; yaml.safe_load(open('.atdd/config.yaml'))" 2>/tmp/yaml_err; then
+  cat /tmp/yaml_err >&2
+  die ".atdd/config.yaml is invalid YAML — see error above"
+fi
+pass ".atdd/config.yaml parses cleanly"
+if grep -q "^test_runner:" .atdd/config.yaml; then
+  pass "test_runner block present"
+else
+  warn "test_runner block not found — may have been dropped in merge"
+fi
+
+# ============================================================================
+# SOFT CHECKS — report and keep going
+# ============================================================================
+
+echo ""
 echo "=== 1. atdd CLI availability ==="
 if command -v atdd >/dev/null 2>&1; then
   VERSION=$(atdd --version 2>/dev/null || echo "unknown")
@@ -62,18 +99,24 @@ fi
 echo ""
 echo "=== 4. convention files referenced by skills-package/ ==="
 if [[ -d skills-package ]]; then
-  # Extract all convention paths mentioned in skills
-  MISSING=0
-  CONV_REFS=$(grep -roh "src/atdd/[a-z]*/conventions/[a-z_.-]*\.yaml" skills-package/ 2>/dev/null | sort -u || true)
+  # Loosened regex: match any path containing 'conventions/' or 'convention.yaml'
+  CONV_REFS=$(grep -rEoh "[a-zA-Z0-9_/.-]*convention[a-zA-Z0-9_./-]*\.yaml" skills-package/ 2>/dev/null \
+              | grep -v "^$" | sort -u || true)
   if [[ -z "$CONV_REFS" ]]; then
     info "no convention references found in skills-package/"
   else
     while IFS= read -r ref; do
-      if [[ -f "$ref" ]]; then
+      # Strip leading slashes so we can resolve relative to repo root
+      clean="${ref#/}"
+      if [[ -f "$clean" ]]; then
         pass "$ref exists"
       else
-        fail "$ref missing (likely renamed upstream)"
-        MISSING=$((MISSING+1))
+        # Try a search in case the path is relative to src/atdd/
+        if find src -path "*/$clean" -print -quit 2>/dev/null | grep -q .; then
+          pass "$ref resolves under src/"
+        else
+          fail "$ref not found (likely renamed upstream)"
+        fi
       fi
     done <<< "$CONV_REFS"
   fi
@@ -82,25 +125,7 @@ else
 fi
 
 echo ""
-echo "=== 5. .atdd/config.yaml validity ==="
-if [[ -f .atdd/config.yaml ]]; then
-  if python3 -c "import yaml; yaml.safe_load(open('.atdd/config.yaml'))" 2>/dev/null; then
-    pass ".atdd/config.yaml is valid YAML"
-    # check test_runner block survived
-    if grep -q "^test_runner:" .atdd/config.yaml; then
-      pass "test_runner block present"
-    else
-      warn "test_runner block not found — may have been dropped in merge"
-    fi
-  else
-    fail ".atdd/config.yaml is invalid YAML"
-  fi
-else
-  warn ".atdd/config.yaml not found"
-fi
-
-echo ""
-echo "=== 6. CLI command surface (skills reference these) ==="
+echo "=== 5. CLI command surface (skills reference these) ==="
 if command -v atdd >/dev/null 2>&1; then
   for cmd in "validate" "gate" "issue" "inventory" "status"; do
     if atdd "$cmd" --help >/dev/null 2>&1; then
@@ -122,7 +147,6 @@ if [[ $FAIL -gt 0 ]]; then
   echo ""
   echo "action required. common fixes:"
   echo "  - missing conventions: update skills-package/ references to new paths"
-  echo "  - invalid config: reconcile .atdd/config.yaml against upstream's new shape"
   echo "  - CLI missing: cd to repo root and run 'pip install -e .[dev]'"
   exit 1
 fi
