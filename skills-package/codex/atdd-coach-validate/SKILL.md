@@ -32,7 +32,57 @@ ATDD CLI not installed. Run: pip install -e ".[dev]" from the ATDD repo root.
 - Read `plan/_trains.yaml` and `plan/_wagons.yaml` — understand the system map
 - Read `contracts/_contracts.yaml` and `contracts/_artifacts.yaml` — contract registry
 
-### 2. Run Validators
+### 2. Tier Classification Enforcement
+
+Check whether changed files fall under tier enforcement before running validators.
+Skip this step entirely if `.atdd/tier_tags.yaml` does not exist (backward compatible).
+
+**2a. Load tier tags:**
+```bash
+cat .atdd/tier_tags.yaml   # read tier_3_paths and tier_2_paths glob lists
+```
+If absent: skip to step 3.
+
+**2b. Get changed files for the current feature:**
+```bash
+git diff --name-only main...HEAD
+```
+Also inspect `docs/handoffs/<feature-slug>/handoff-spec.yaml` (`files_to_change` field) if it exists.
+
+**2c. Match changed files against tier patterns (glob matching):**
+- If **any** changed file matches a `tier_3_path` entry → enforce Tier 3 (see 2d)
+- Else if **any** changed file matches a `tier_2_path` entry → enforce Tier 2 (see 2e)
+- No match → skip tier enforcement
+
+**2d. Tier 3 enforcement** — FAIL validation if any of the following are missing:
+
+| Required | Check |
+|---|---|
+| `docs/handoffs/<feature-slug>/plan.yaml` exists | Was the PLAN phase completed? |
+| At least one commit with `[tier3][plan]` prefix in branch history | `git log --oneline main..HEAD \| grep '\[tier3\]'` |
+| At least one commit with `[tier3][red]` prefix | Failing tests committed before GREEN |
+| At least one commit with `[tier3][green]` prefix | Implementation committed |
+| `validation.yaml` will be written by this step | This IS the validate phase |
+
+On any missing item, stop and emit:
+```
+FAIL — Tier 3 path detected: {matching_path}
+Missing: {plan.yaml | [tier3][plan] commit | [tier3][red] commit | [tier3][green] commit}
+Tier 3 protocol requires dual-model workflow. See docs/handoffs/<feature-slug>/.
+```
+
+Do not proceed to step 3 until all Tier 3 checks pass.
+
+**2e. Tier 2 enforcement** — WARN (do not fail):
+
+- Check that commit messages on the branch include `[tier2]` prefixes:
+  ```bash
+  git log --oneline main..HEAD | grep '\[tier2\]'
+  ```
+  If absent: emit `WARN — Tier 2 path detected: {matching_path}. Commit messages should carry [tier2] prefix.`
+- Remind reviewer: flag this PR for human review before merge.
+
+### 3. Run Validators
 
 Execute the full ATDD validation suite:
 
@@ -49,7 +99,7 @@ atdd validate coder     # Before GREEN → SMOKE, or SMOKE → REFACTOR
 atdd validate coach     # Cross-wagon coherence (always run)
 ```
 
-### 3. Cross-Wagon Checks
+### 4. Cross-Wagon Checks
 
 Beyond what `atdd validate` catches, perform these manual checks:
 
@@ -74,7 +124,7 @@ Beyond what `atdd validate` catches, perform these manual checks:
 - All prerequisite phases completed
 - No wagon stuck in an invalid state
 
-### 4. Publish Findings
+### 5. Publish Findings
 
 If running as part of the TDD review loop, publish findings in the same review format:
 
@@ -82,6 +132,12 @@ Create `docs/reviews/REVIEW_STORY-{id}_ROUND{n}_COACH.md`:
 
 ```markdown
 # COACH REVIEW — {wagon_urn} — {phase} Phase
+
+## Tier Classification
+- **Tier tags file:** {found | not found — tier enforcement skipped}
+- **Detected tier:** {Tier 1 | Tier 2 | Tier 3 | N/A}
+- **Matching path(s):** {list or "none"}
+- **Tier checks:** {PASS | FAIL — <what is missing> | WARN — <what to flag> | N/A}
 
 ## Validator Results
 - `atdd validate`: {PASS | FAIL with details}
@@ -102,7 +158,7 @@ Create `docs/reviews/REVIEW_STORY-{id}_ROUND{n}_COACH.md`:
 - **Open P0/P1 findings:** {count}
 ```
 
-### 5. Adjudicate Coder Responses
+### 6. Adjudicate Coder Responses
 
 When the coder (Claude) responds to coach findings via `respond-to-review`:
 
@@ -111,7 +167,7 @@ When the coder (Claude) responds to coach findings via `respond-to-review`:
 - A fix that passes wagon-level tests but breaks cross-wagon contracts is still a P0
 - Log final decision for each finding
 
-### 6. Gate Decision
+### 7. Gate Decision
 
 After all findings are resolved:
 
@@ -120,14 +176,16 @@ After all findings are resolved:
 - No open P0 or P1 findings
 - Cross-wagon contract checks pass
 - Event taxonomy is consistent
+- Tier 3 checks pass (or no tier_tags.yaml present)
 
 **Block transition if:**
 - Any P0/P1 finding remains open
 - `atdd validate` fails
 - Contract drift detected between wagons
 - Architecture boundary violations exist
+- Tier 3 path detected but plan.yaml or phase commits are missing
 
-### 7. Record Transition
+### 8. Record Transition
 
 If gate passes:
 ```bash
