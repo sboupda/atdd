@@ -5,6 +5,7 @@ release:
 sync:
   agents:
   - claude
+  - codex
 init:
   skip_workflows: true
 coverage:

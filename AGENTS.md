@@ -1,298 +1,3 @@
----
-missions:
-  orchestrate_atdd: "ATDD lifecycle (planner → tester RED → coder GREEN → tester SMOKE → coder REFACTOR)"
-  validate_phase_transitions: "Phase transitions and quality gates per conventions and schemas"
-  required: true
-
-manifest:
-  - trains: "plan/_trains.yaml"
-  - wagons: "plan/_wagons.yaml"
-  - features: "plan/*/_features.yaml"
-  - wmbt: "plan/*/*.yaml"
-  - artifacts: "contracts/_artifacts.yaml"
-  - contracts: "contracts/_contracts.yaml"
-  - telemetry: "telemetry/_telemetry.yaml"
-  - taxonomy: "telemetry/_taxonomy.yaml"
-
-tests:
-  - frontend: "web/tests"
-  - supabase: "supabase/functions/*/*/tests/"
-  - python: "python/*/*/tests"
-  - packages: "packages/*/tests"
-  - e2e: "e2e"
-
-code:
-  - frontend: "web/src"
-  - supabase: "supabase/functions"
-  - python: "python"
-  - packages: "packages"
-  - migrations: "supabase/migrations"
-
-# Dev Servers
-dev_servers:
-  backend:
-    command: "cd python && python3 app.py"
-    url: "http://127.0.0.1:8000"
-    swagger: "http://127.0.0.1:8000/docs"
-  frontend:
-    command: "cd web && npm run dev"
-    url: "http://localhost:5173"
-  supabase:
-    mode: "remote only"
-    cli: "supabase CLI for migrations, db commands (never run `supabase start`)"
-    note: "All Supabase services accessed via remote project, not local Docker"
-
-# Audits & Validation (Give context, pinpoint issues, validate compliance)
-audits:
-  cli: "atdd"
-  purpose: "Validators that check ATDD artifacts against conventions"
-
-  commands:
-    validate_all: "atdd validate"
-    validate_planner: "atdd validate planner"
-    validate_tester: "atdd validate tester"
-    validate_coder: "atdd validate coder"
-    quick_check: "atdd validate --quick"
-    with_coverage: "atdd validate --coverage"
-    with_html: "atdd validate --html"
-    inventory: "atdd inventory"
-    status: "atdd status"
-
-  workflow:
-    before_init: "Run planner validators to check plan structure"
-    after_init: "Validate wagon URNs, cross-refs, uniqueness"
-    before_planned: "Run tester validators to check test prerequisites"
-    after_planned: "Validate test naming, contracts, coverage"
-    before_red: "Validate layer structure expectations"
-    after_red: "Validate tests are RED and properly structured"
-    before_green: "Run coder validators for architecture readiness"
-    after_green: "Validate layer dependencies, boundaries"
-    after_refactor: "Validate architecture compliance, quality metrics"
-    continuous: "CI runs 'atdd validate' on every commit"
-
-  audit_scope:
-    planner: "src/atdd/planner/validators/*.py (wagons, trains, URNs, cross-refs, WMBT)"
-    tester: "src/atdd/tester/validators/*.py (test naming, contracts, telemetry, coverage)"
-    coder: "src/atdd/coder/validators/*.py (architecture, boundaries, layers, quality)"
-    coach: "src/atdd/coach/validators/*.py (registry, traceability, contract consumers)"
-
-  usage:
-    pinpoint_issues: "Audits fail with detailed error messages showing violations"
-    give_context: "Error messages reference specific conventions and schemas"
-    validate_compliance: "All audits must pass before phase transition"
-
-# ATDD Lifecycle (Detailed steps in agent conventions)
-atdd_cycle:
-  phases:
-    - name: INIT
-      agent: planner
-      conventions: "src/atdd/planner/conventions/*.yaml"
-      audits: "src/atdd/planner/validators/*.py"
-      deliverables: ["train_path", "wagon_path", "wmbt_path", "feature_path"]
-      transitions: "INIT → PLANNED"
-
-    - name: PLANNED
-      agent: tester
-      conventions: "src/atdd/tester/conventions/*.yaml"
-      audits: "src/atdd/tester/validators/*.py"
-      deliverables: ["test_paths", "contract_paths", "telemetry_paths"]
-      transitions: "PLANNED → RED"
-
-    - name: RED
-      agent: coder
-      task: "Make tests GREEN"
-      conventions: "src/atdd/coder/conventions/green.convention.yaml"
-      audits: "src/atdd/coder/validators/test_green_*.py"
-      deliverables: ["code_paths", "tests_passing"]
-      transitions: "RED → GREEN"
-
-    - name: GREEN
-      agent: tester
-      task: "Verify against real infrastructure (SMOKE tests)"
-      conventions: "src/atdd/tester/conventions/smoke.convention.yaml"
-      audits: "src/atdd/tester/validators/test_smoke_*.py"
-      deliverables: ["smoke_test_paths"]
-      transitions: "GREEN → SMOKE"
-
-    - name: SMOKE
-      agent: coder
-      task: "REFACTOR to 4-layer architecture"
-      conventions: "src/atdd/coder/conventions/refactor.convention.yaml"
-      audits: "src/atdd/coder/validators/test_architecture_*.py"
-      deliverables: ["refactor_paths"]
-      transitions: "SMOKE → REFACTOR"
-
-    - name: REFACTOR
-      status: complete
-      audits: "src/atdd/coder/validators/test_quality_metrics.py"
-
-  execution:
-    assess_first: "MUST assess current state before any action"
-    phase_transitions: "Explicit transitions with quality gates"
-    agent_handoff: "Dynamic handoff based on phase"
-    audit_enforcement: "All phase audits MUST pass before transition"
-
-# Infrastructure
-infrastructure:
-  contract_driven: true  # All interfaces defined via JSON Schema contracts
-  persistence:
-    default: "Supabase JSONB"  # Schema evolution without migrations
-    exceptions: "Relational for complex queries, indexes"
-  conventions:
-    contracts: "src/atdd/tester/conventions/contract.convention.yaml"
-    technology: "src/atdd/coder/conventions/technology.convention.yaml"
-
-# Architecture (Detailed rules in conventions)
-architecture:
-  conventions:
-    layers: "src/atdd/coder/conventions/backend.convention.yaml"
-    boundaries: "src/atdd/coder/conventions/boundaries.convention.yaml"
-    composition: "src/atdd/coder/conventions/green.convention.yaml"
-    design_system: "src/atdd/coder/conventions/design.convention.yaml"
-
-  principles:
-    - "Domain layer NEVER imports from other layers"
-    - "Dependencies point inward only (integration → application → domain)"
-    - "Test first (RED → GREEN → SMOKE → REFACTOR)"
-    - "Wagons communicate via contracts only"
-    - "composition.py/wagon.py are composition roots (survive refactoring)"
-
-# Testing (Detailed rules in conventions)
-testing:
-  conventions:
-    red: "src/atdd/tester/conventions/red.convention.yaml"
-    filename: "src/atdd/tester/conventions/filename.convention.yaml"
-    contract: "src/atdd/tester/conventions/contract.convention.yaml"
-    artifact: "src/atdd/tester/conventions/artifact.convention.yaml"
-
-  principles:
-    - "No ad-hoc tests - follow conventions"
-    - "Code must be inherently auditable with verbose logs"
-    - "State-of-the-art testing strategies only"
-    - "Test path determines implementation runtime"
-    - "Tests co-located with src (python/*/tests/, supabase/*/tests/)"
-
-# Git Practices
-git:
-  commits:
-    co_authored: false  # DO NOT add "Co-Authored-By: Claude <noreply@anthropic.com>"
-    format: "conventional commits (feat:, fix:, docs:, refactor:, test:)"
-    atomic: "One commit per phase transition when meaningful"
-
-  workflow:
-    branch_strategy: "feature branches from main/mechanic"
-    phase_commits:
-      - "PLANNED: commit wagon + acceptance criteria"
-      - "RED: commit failing tests"
-      - "GREEN: commit passing implementation"
-      - "REFACTOR: commit clean architecture"
-
-# Agent Coordination (Detailed in action files)
-agents:
-  planner:
-    role: "Create wagons with acceptance criteria"
-    conventions: "src/atdd/planner/conventions/*.yaml"
-    schemas: "src/atdd/planner/schemas/*.json"
-    audits: "src/atdd/planner/validators/*.py"
-
-  tester:
-    role: "Generate RED tests from acceptance criteria"
-    conventions: "src/atdd/tester/conventions/*.yaml"
-    schemas: "src/atdd/tester/schemas/*.json"
-    audits: "src/atdd/tester/validators/*.py"
-
-  coder:
-    role: "Implement GREEN code, then REFACTOR to clean architecture (SMOKE between GREEN and REFACTOR)"
-    conventions: "src/atdd/coder/conventions/*.yaml"
-    schemas: "src/atdd/coder/schemas/*.json"
-    audits: "src/atdd/coder/validators/*.py"
-
-# Session Planning (Design before implementation)
-# Note: atdd-sessions/ is historical; new issues are GitHub Issues via `atdd issue`
-sessions:
-  # Consumer repo paths (historical — legacy local session files)
-  directory: "atdd-sessions/"
-  archive: "atdd-sessions/archive/"
-  config_dir: ".atdd/"
-  manifest: ".atdd/manifest.yaml"
-  # Package resources
-  template: "src/atdd/coach/templates/ATDD-ISSUE-TEMPLATE.md"
-  convention: "src/atdd/coach/conventions/issue.convention.yaml"
-
-  commands:
-    init: "atdd init                    # Initialize .atdd/ and GitHub infrastructure"
-    new: "atdd issue my-feature           # Create issue + WMBT sub-issues"
-    list: "atdd issue open               # List open issues"
-    archive: "atdd issue 11 --status COMPLETE  # Complete issue"
-
-  workflow:
-    init: "Run 'atdd init' to bootstrap .atdd/ config and GitHub infrastructure"
-    create: "Run 'atdd issue <slug>' to create new issue from template"
-    fill: "Fill ALL sections - write 'N/A' if not applicable, never omit"
-    track: "Update Progress Tracker and Session Log after each work item"
-    validate: "atdd validate coach"
-
-  archetypes:
-    db: "Supabase PostgreSQL + JSONB"
-    be: "Python FastAPI 4-layer"
-    fe: "TypeScript/Preact 4-layer"
-    contracts: "JSON Schema contracts"
-    wmbt: "What Must Be True criteria"
-    wagon: "Bounded context module"
-    train: "Release orchestration"
-    telemetry: "Observability artifacts"
-    migrations: "Database schema evolution"
-
-  atdd_phases:
-    RED: "Write failing tests from acceptances"
-    GREEN: "Implement minimal code to pass tests"
-    SMOKE: "Verify against real infrastructure (HTTP, DB, auth)"
-    REFACTOR: "Clean architecture, 4-layer compliance"
-
-# Quality Gates (Detailed in action files)
-validations:
-  phase_transitions:
-    INIT→PLANNED: "planner delivers wagon with acceptance criteria"
-    PLANNED→RED: "tester delivers RED tests"
-    RED→GREEN: "coder delivers passing tests"
-    GREEN→SMOKE: "tester delivers smoke tests against real infrastructure"
-    SMOKE→REFACTOR: "coder delivers clean architecture"
-
-  code_quality:
-    - "Domain layer has no external dependencies"
-    - "All tests pass before REFACTOR"
-    - "Architecture follows 4-layer pattern"
-    - "Wagons isolated via qualified imports"
-    - "Composition roots stable during refactor"
-
-# Conventions Registry
-conventions:
-  planner:
-    - "wagon.convention.yaml: wagon structure & URN naming"
-    - "acceptance.convention.yaml: acceptance criteria & harness types"
-    - "wmbt.convention.yaml: WMBT structure"
-    - "feature.convention.yaml: feature structure"
-    - "artifact.convention.yaml: artifact contracts"
-
-  tester:
-    - "red.convention.yaml: RED test generation (neurosymbolic)"
-    - "filename.convention.yaml: URN-based test naming"
-    - "contract.convention.yaml: schema validation"
-    - "artifact.convention.yaml: artifact validation"
-    - "smoke.convention.yaml: SMOKE phase integration tests"
-
-  coder:
-    - "green.convention.yaml: GREEN phase (make tests pass)"
-    - "refactor.convention.yaml: REFACTOR phase (clean architecture)"
-    - "boundaries.convention.yaml: wagon isolation & qualified imports"
-    - "backend.convention.yaml: 4-layer backend architecture"
-    - "frontend.convention.yaml: 4-layer frontend architecture"
-    - "design.convention.yaml: design system hierarchy"
-
-  coach:
-    - "session.convention.yaml: Session planning structure & archetypes"
----
-
 # --- ATDD:BEGIN (managed by atdd, do not edit) ---
 
 ---
@@ -752,36 +457,135 @@ conventions:
     - "issue.convention.yaml: Session planning structure & archetypes"
 ---
 
-# Agent-specific: claude
-# Claude-specific additions
-# This content is appended to the base ATDD.md when syncing to CLAUDE.md
+# Agent-specific: codex
+# Codex-specific additions
+# This content is appended to the base ATDD.md when syncing to AGENTS.md
 
-# Risk-Tiered Development Policy — Claude Role: IMPLEMENTER
+# Risk-Tiered Development Policy — Codex Role: PLANNER
 
-In the dual-model Tier 3 workflow, Claude is the **implementer**.
-Codex (or another planning agent) writes `plan.yaml`, `contracts.yaml`, and `handoff-spec.yaml`.
-Claude reads those artifacts and executes RED → GREEN → SMOKE → REFACTOR.
+## Tier Definitions
 
-**Before writing any Tier 3 code:**
-1. Read `docs/handoffs/<feature-slug>/handoff-spec.yaml` — this is your spec.
-2. Read `docs/handoffs/<feature-slug>/contracts.yaml` — these are the interfaces you must satisfy.
-3. Read `docs/handoffs/<feature-slug>/plan.yaml` — confirm scope (what is IN, what is OUT).
-4. If any of these files are missing, STOP and ask the planner (Codex) to complete the PLAN phase.
+Tier is determined by the blast radius of a bug, not the apparent complexity of the task.
 
-**Tier 3 commit discipline:**
+**Tier 1 — Standard (default)**
+Docs, internal tooling, refactors, UI, tests, admin scripts, data pipelines that don't affect
+money. No special protocol — single model, framework gates only.
 
-| Phase    | Commit prefix           |
-|----------|-------------------------|
-| RED      | `[tier3][red]`          |
-| GREEN    | `[tier3][green]`        |
-| REFACTOR | `[tier3][refactor]`     |
+**Tier 2 — Elevated**
+Customer data, contracts, calculations that feed Tier 3, external compliance — but not money
+directly. Examples: KYC data handling, contract generation, pricing calculations, authentication.
+Protocol: commit at each phase with `[tier2]` prefix; flag PR for human review before merge.
 
-Never skip directly to GREEN. Always commit failing tests first (`[tier3][red]`).
+**Tier 3 — Critical (Money Paths)**
+Any code path that initiates, modifies, or validates financial transactions.
+Triggers: transfer, pay, disburse, settle, trade, reconcile, balance writes, FX rate application,
+credit scoring that determines limits, regulatory reporting, anything irreversible within 24h.
+Protocol: **dual-model workflow — Codex is the PLANNER, Claude is the implementer.**
 
-**After implementation:**
-Request `atdd-coach-validate` to run cross-wagon validation and write `validation.yaml`.
-Do not merge until coach validation passes.
+### Per-Repo Override
 
-**Tier 2:** Use `[tier2]` prefix on all phase commits. Flag PR for human review.
+If `.atdd/tier_tags.yaml` exists in the repo, use its `tier_3_paths` and `tier_2_paths` glob
+lists to classify files. When the file is absent, apply the definitions above.
+
+### Uncertainty Rule
+
+If unsure between Tier 2 and Tier 3, treat as Tier 3. The cost of unnecessary rigor is low;
+the cost of a money-path bug is high.
+
+---
+
+## Tier 3 Escalation Protocol — Codex as PLANNER
+
+When any changed file matches a `tier_3_path`:
+
+1. **Declare the tier** at the start of your response:
+   `"This feature touches a Tier 3 path ({path}). Applying dual-model protocol."`
+
+2. **Do NOT produce implementation code.** Your role is planning only.
+
+3. **Write handoff artifacts** to `docs/handoffs/<feature-slug>/`:
+
+   ```
+   docs/handoffs/<feature-slug>/
+     plan.yaml          ← your output: acceptance criteria, scope boundaries
+     contracts.yaml     ← your output: interfaces, invariants, event schemas
+     handoff-spec.yaml  ← your output: files to change, test strategy, edge cases
+   ```
+
+   Minimum `plan.yaml` structure:
+   ```yaml
+   feature: <feature-slug>
+   tier: 3
+   acceptance_criteria:
+     - id: AC-01
+       description: <what must be true>
+       test_strategy: <how to verify>
+   scope:
+     in:
+       - <explicit inclusions>
+     out:
+       - <explicit exclusions>
+   ```
+
+   Minimum `contracts.yaml` structure:
+   ```yaml
+   feature: <feature-slug>
+   interfaces:
+     - name: <InterfaceName>
+       description: <what it does>
+       schema: <inline JSON Schema or $ref>
+   invariants:
+     - <property that must always hold>
+   ```
+
+4. **Commit** the handoff artifacts:
+   ```
+   [tier3][plan] plan: <feature-slug>
+   ```
+
+5. **Hand off to Claude** (implementer) with:
+   > "Tier 3 plan complete. Read `docs/handoffs/<feature-slug>/handoff-spec.yaml` before
+   > writing any code. Implement RED tests first, then GREEN, then SMOKE, then REFACTOR.
+   > Prefix every phase commit with `[tier3][red]`, `[tier3][green]`, etc."
+
+6. **After implementation**, request `atdd-coach-validate` review before merge.
+   Do not approve the merge yourself — coach validation is mandatory.
+
+---
+
+## Tier 2 Escalation Protocol
+
+When any changed file matches a `tier_2_path` (and none match `tier_3_path`):
+
+1. Declare the tier at the start of your response.
+2. Include `[tier2]` prefix in every phase commit:
+   `[tier2] plan: ...`, `[tier2] implement: ...`, `[tier2] test: ...`
+3. Flag the PR for human review — do not approve it yourself.
+
+---
+
+## Handoff Artifact Store
+
+```
+docs/handoffs/<feature-slug>/
+  plan.yaml           # planner output (Codex writes)
+  contracts.yaml      # interface contracts (Codex writes)
+  handoff-spec.yaml   # coder input: files, tests, edge cases (Codex writes)
+  validation.yaml     # coach output (atdd-coach-validate writes)
+```
+
+Artifacts are written by agents and committed — they form the audit trail alongside git history.
+
+---
+
+## Phase Commit Prefixes (Tier 3)
+
+| Phase | Agent  | Commit prefix          |
+|-------|--------|------------------------|
+| PLAN  | Codex  | `[tier3][plan]`        |
+| RED   | Claude | `[tier3][red]`         |
+| GREEN | Claude | `[tier3][green]`       |
+| REFACTOR | Claude | `[tier3][refactor]` |
+| VALIDATE | Coach | `[tier3][validate]`  |
 
 # --- ATDD:END ---
