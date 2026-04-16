@@ -34,3 +34,5 @@ coverage.xml
 Thumbs.db
 .atdd/baselines/
 .atdd/tier_tags.yaml
+.atdd/baselines/
+.atdd/tier_tags.yaml
