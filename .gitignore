@@ -32,3 +32,5 @@ coverage.xml
 # OS
 .DS_Store
 Thumbs.db
+.atdd/baselines/
+.atdd/tier_tags.yaml

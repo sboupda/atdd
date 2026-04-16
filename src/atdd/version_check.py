@@ -55,6 +55,16 @@ def _parse_version(version: str) -> Tuple[int, ...]:
         return (0, 0, 0)
 
 
+def _is_local_version(version: str) -> bool:
+    """True if version contains a PEP 440 local segment (e.g. '1.53.0+diool.2').
+
+    Local versions indicate a downstream fork.  PyPI will never serve a
+    local version, so comparing against PyPI is meaningless — the fork
+    maintainer pins their own version deliberately.
+    """
+    return "+" in version
+
+
 def _is_newer(latest: str, current: str) -> bool:
     """Check if latest version is newer than current."""
     return _parse_version(latest) > _parse_version(current)
@@ -104,6 +114,11 @@ def check_for_updates() -> Optional[str]:
 
     # Skip if running in development (version 0.0.0)
     if __version__ == "0.0.0":
+        return None
+
+    # Skip PyPI check for local (fork) versions — the fork maintainer
+    # pins their own version; PyPI comparison is meaningless.
+    if _is_local_version(__version__):
         return None
 
     cache = _load_cache()
@@ -297,6 +312,10 @@ def is_outdated() -> Tuple[bool, str, str]:
     """
     current = __version__
     if current == "0.0.0":
+        return False, current, ""
+
+    # Local (fork) versions are intentionally pinned — never outdated vs PyPI.
+    if _is_local_version(current):
         return False, current, ""
 
     latest = _fetch_latest_version()
