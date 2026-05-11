@@ -1,0 +1,78 @@
+# Tier Tags — Path-to-Risk-Tier Mapping
+# Referenced by: ~/.claude/CLAUDE.md (Global Policy v1.0)
+#
+# Rules:
+#   - Globs are matched against repo-relative paths
+#   - First match wins (order matters — put specific paths before broad ones)
+#   - Paths not matched here fall back to the global tier definitions
+#   - When uncertain between tier 2 and tier 3, use tier 3
+
+version: "1.0"
+
+# ─── Tier 3: Money Paths ────────────────────────────────────────────
+# Anything that touches financial transactions, balances, settlements,
+# reconciliation, FX, credit scoring, or regulatory reporting.
+tier_3:
+  paths:
+    # Examples — uncomment and adapt for your repo:
+    # - "src/payments/**"
+    # - "src/settlement/**"
+    # - "src/ledger/**"
+    # - "src/reconciliation/**"
+    # - "src/fx/**"
+    # - "src/credit_scoring/**"
+    # - "src/regulatory/**"
+    # - "supabase/migrations/**/balances*.sql"
+    # - "supabase/migrations/**/transactions*.sql"
+    # - "supabase/functions/*/transfer/**"
+    # - "supabase/functions/*/disburse/**"
+    # - "contracts/**/payment*.json"
+    # - "contracts/**/settlement*.json"
+  keywords:
+    # Any file containing these in its path triggers tier 3 review
+    - "transfer"
+    - "disburse"
+    - "settle"
+    - "balance"
+    - "ledger"
+    - "reconcil"
+
+# ─── Tier 2: Elevated ───────────────────────────────────────────────
+# Customer data, auth, contracts, pricing, compliance feeds.
+tier_2:
+  paths:
+    # Examples — uncomment and adapt:
+    # - "src/auth/**"
+    # - "src/kyc/**"
+    # - "src/pricing/**"
+    # - "src/contracts/**"
+    # - "src/compliance/**"
+    # - "supabase/migrations/**/users*.sql"
+    # - "supabase/migrations/**/kyc*.sql"
+    # - "supabase/functions/*/auth/**"
+  keywords:
+    - "kyc"
+    - "auth"
+    - "credential"
+    - "compliance"
+
+# ─── Tier 1: Standard (everything else) ─────────────────────────────
+# Explicitly listed paths are always tier 1, even if a keyword above
+# would otherwise match. Use this as a safe-list.
+tier_1:
+  paths:
+    - "docs/**"
+    - "plan/**"
+    - "contracts/**"           # ATDD contract schemas, not financial contracts
+    - "src/atdd/planner/**"
+    - "src/atdd/tester/**"
+    - "src/atdd/coder/**"
+    - "src/atdd/coach/**"
+    - "src/atdd/cli.py"
+    - "skills-package/**"
+    - "scripts/**"
+    - "e2e/**"
+    - "baselines/**"
+    - "*.md"
+    - ".atdd/**"
+    - ".github/**"
